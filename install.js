@@ -1,29 +1,16 @@
-let deferredPrompt;
 
-window.addEventListener('beforeinstallprompt', (e) => {
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('install-btn').style.display = 'block';
-});
+  const installBtn = document.getElementById("installBtn");
+  if (installBtn) installBtn.style.display = "block";
 
-document.getElementById('install-btn').addEventListener('click', () => {
-  if (deferredPrompt) {
+  installBtn?.addEventListener("click", () => {
+    installBtn.style.display = "none";
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(choice => {
-      if (choice.outcome === 'accepted') {
-        console.log('App installiert');
-      }
+    deferredPrompt.userChoice.then(() => {
       deferredPrompt = null;
     });
-  } else {
-    showInstallInstructions();
-  }
+  });
 });
-
-function showInstallInstructions() {
-  const isiOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const msg = isiOS
-    ? "🍏 iOS: Teilen > 'Zum Homebildschirm'"
-    : "📱 Android: Browsermenü > 'Zum Startbildschirm hinzufügen'";
-  alert(msg);
-}
