@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f0f0f" />
+
+  <title>Dosierverhältnis-Rechner</title>
+
+  <!-- Favicon & Icons -->
+  <link rel="icon" href="icons/favicon.ico" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Dosierverhältnis-Rechner</h1>
+    </header>
+
+    <section class="card">
+      <label>[A] Komponente:
+        <input type="number" id="inputA" min="0" step="any" />
+      </label>
+      <label>[B] Komponente:
+        <input type="number" id="inputB" min="0" step="any" />
+      </label>
+    </section>
+
+    <section class="card result-block">
+      <div class="result-label">Ergebnis der aktuellen Probe:</div>
+      <div class="result-value" id="liveResult">–</div>
+      <button id="confirmBtn" class="confirm-btn" disabled title="Wert bestätigen">✅</button>
+    </section>
+
+    <section class="card history">
+      <h2>Gespeicherte Ergebnisse</h2>
+      <ul id="resultList"></ul>
+      <p>Arithm. Mittel: <output id="meanResult">–</output></p>
+    </section>
+
+    <!-- Optionaler Installationsbutton -->
+    <button id="installBtn" style="display: none;">📲 App installieren</button>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script src="install.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log("Service Worker registriert:", reg.scope))
+        .catch(err => console.error("Service Worker Fehler:", err));
+    }
+  </script>
+</body>
+</html>
