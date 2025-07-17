@@ -47,7 +47,7 @@ function updateList() {
 li.innerHTML = `
   <div class="label-row">
     <span>Ergebnis ${i + 1}</span>
-    <button onclick="deleteResult(${i})">🗑️</button>
+    <button onclick="deleteResult(${i})">❌Wert löschen</button>
   </div>
   <div class="value">→ ${r.toFixed(2)}</div>
 `;
