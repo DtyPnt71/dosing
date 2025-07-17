@@ -246,9 +246,6 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 .history li .value {
   font-size: 1.7rem;
@@ -282,9 +279,6 @@ h1 {
   font-size: 1.3rem;
 }
 .history li .label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -337,9 +331,6 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   font-weight: 600;
   margin-bottom: 0.3rem;
 }
@@ -378,9 +369,6 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   font-weight: 600;
 }
 
@@ -412,13 +400,16 @@ h1 {
   }
 
   .label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
     font-size: 0.5rem;
   }
 
   .mean-value {
     font-size: 1.3rem;
   }
+}
+
+.label-row.space-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
