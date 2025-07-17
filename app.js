@@ -83,7 +83,7 @@ installBtn.addEventListener("click", async () => {
     deferredPrompt = null;
     installBtn.style.display = "none";
   } else {
-    alert("Installation wird von diesem Browser nicht unterstützt.");
+    alert("iOS -> Teilen -> Zum Homebildschirm");
   }
 });
 
