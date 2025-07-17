@@ -98,16 +98,14 @@ h1 {
 .history li span {
   flex: 1;
 }
-
 .history button {
   background: none;
   border: none;
-  font-size: 1.5rem;
-  color: #f44336;
+  font-size: 1.4rem;
   cursor: pointer;
-  margin-left: auto;
+  color: #f44336;
+  padding-left: 1rem;
 }
-
 
 
 @media (min-width: 600px) {
@@ -139,16 +137,14 @@ h1 {
 .history li span {
   margin-bottom: 0.5rem;
 }
-
 .history button {
+  align-self: flex-end;
+  font-size: 1.5rem;
   background: none;
   border: none;
-  font-size: 1.5rem;
   color: #f44336;
   cursor: pointer;
-  margin-left: auto;
 }
-
 
 
 @media (pointer: coarse) {
@@ -158,16 +154,10 @@ h1 {
   .input-section input,
   .install-btn,
   .confirm-btn,
-  
-.history button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #f44336;
-  cursor: pointer;
-  margin-left: auto;
-}
-
+  .history button {
+    font-size: 1.4rem;
+    padding: 1rem;
+  }
   .result-value {
     font-size: 1.6rem;
   }
@@ -198,16 +188,9 @@ h1 {
     font-size: 1.5rem;
     padding: 1rem 1.5rem;
   }
-  
-.history button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #f44336;
-  cursor: pointer;
-  margin-left: auto;
-}
-
+  .history button {
+    font-size: 1.7rem;
+  }
   h1 {
     font-size: 2.2rem;
   }
@@ -239,16 +222,14 @@ h1 {
   color: #4caf50;
   margin-left: 1rem;
 }
-
 .history button {
   background: none;
   border: none;
   font-size: 1.5rem;
   color: #f44336;
+  margin-left: 1rem;
   cursor: pointer;
-  margin-left: auto;
 }
-
 
 
 .history li {
@@ -272,16 +253,13 @@ h1 {
   color: #4caf50;
   padding-left: 0.5rem;
 }
-
 .history button {
   background: none;
   border: none;
   font-size: 1.5rem;
   color: #f44336;
   cursor: pointer;
-  margin-left: auto;
 }
-
 .mean-value {
   font-size: 1.6rem;
   font-weight: bold;
@@ -311,16 +289,13 @@ h1 {
   color: #4caf50;
   padding-left: 0.5rem;
 }
-
 .history button {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: #f44336;
   cursor: pointer;
-  margin-left: auto;
 }
-
 .mean-value {
   font-size: 1.6rem;
   font-weight: bold;
