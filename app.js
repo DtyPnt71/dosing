@@ -13,6 +13,7 @@ function calcLive() {
   const a = parseFloat(inputA.value);
   const b = parseFloat(inputB.value);
   if (a > 0 && !isNaN(b)) {
+    // Verhältnis A zu B berechnen
     const val = 100 / ((b / a) * 100);
     liveResult.textContent = val.toFixed(2);
     confirmBtn.disabled = false;
@@ -22,8 +23,8 @@ function calcLive() {
   }
 }
 
-[inputA, inputB].forEach(el =>
-  ["input", "change", "keyup"].forEach(event =>
+[inputA, inputB].forEach((el) =>
+  ["input", "change", "keyup"].forEach((event) =>
     el.addEventListener(event, calcLive)
   )
 );
@@ -43,14 +44,13 @@ function updateList() {
   resultList.innerHTML = "";
   results.forEach((r, i) => {
     const li = document.createElement("li");
-    
-li.innerHTML = `
-  <div class="label-row">
-    <span>Ergebnis ${i + 1}</span>
-    <button onclick="deleteResult(${i})">❌Wert löschen</button>
-  </div>
-  <div class="value">→ ${r.toFixed(2)}</div>
-`;
+    li.innerHTML = `
+      <div class="label-row">
+        <span>Ergebnis ${i + 1}</span>
+        <button onclick="deleteResult(${i})">❌Wert löschen</button>
+      </div>
+      <div class="value">→ ${r.toFixed(2)}</div>
+    `;
     resultList.appendChild(li);
   });
 }
@@ -74,16 +74,16 @@ function updateMean() {
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  installBtn.style.display = "block";
+  if (installBtn) installBtn.style.display = "block";
 });
 
-installBtn.addEventListener("click", async () => {
+installBtn?.addEventListener("click", () => {
+  installBtn.style.display = "none";
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt = null;
-    installBtn.style.display = "none";
-  } else {
-    alert("iOS -> Teilen -> Zum Homebildschirm");
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+    });
   }
 });
 
