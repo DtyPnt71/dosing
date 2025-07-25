@@ -45,11 +45,9 @@ function updateList() {
   results.forEach((r, i) => {
     const li = document.createElement("li");
     li.innerHTML = `
-      <div class="label-row">
-        <span>Ergebnis ${i + 1}</span>
-        <button onclick="deleteResult(${i})">❌Wert löschen</button>
-      </div>
-      <div class="value">→ ${r.toFixed(2)}</div>
+      <span class="result-label">Ergebnis ${i + 1}</span>
+      <span class="value-chip">${r.toFixed(2)}</span>
+      <button class="delete-btn" onclick="deleteResult(${i})">×</button>
     `;
     resultList.appendChild(li);
   });
