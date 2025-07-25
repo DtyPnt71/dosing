@@ -4,12 +4,16 @@ body {
   font-family: system-ui, sans-serif;
   background: #121212;
   color: #f0f0f0;
+  /* Verhindert horizontales Scrollen auf schmalen Bildschirmen */
+  overflow-x: hidden;
 }
 
 .container {
+  width: 100%;
   max-width: 700px;
   margin: auto;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 h1 {
@@ -100,6 +104,7 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   padding: 0.75rem 1rem;
   background: #1e2a38;
   border: 2px solid #00bfcf;
