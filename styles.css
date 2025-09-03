@@ -212,6 +212,65 @@ h1 {
   }
 }
 
+/*
+ * Custom Select Styling
+ *
+ * Diese Regeln passen das native <select> Element visuell an das dunkle Theme an
+ * und fügen einen eigenen Chevron (Pfeil) hinzu. Die Wrapper-Klasse .select
+ * schafft eine größere Klickfläche und positioniert den Pfeil absolut.
+ */
+
+/* Container um das Select, sorgt für relative Positionierung und volle Breite */
+.select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Native Select anpassen: Farben, Ränder, Padding, keine Standard-Pfeile */
+.select select {
+  width: 100%;
+  -webkit-appearance: none;
+          appearance: none;
+  background: #263341; /* dunkler Hintergrund passend zu den Karten */
+  color: #e6fbff;      /* heller Text für hohen Kontrast */
+  border: 2px solid #00bfcf; /* Cyan-Rahmen wie bei den Karten */
+  border-radius: 6px;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem; /* Platz für Chevron rechts */
+  font-size: 1rem;
+  line-height: 1.2;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Fokus-Indikator: heller Rahmen beim Tabben */
+.select select:focus-visible {
+  outline: 3px solid #34e0eb;
+  outline-offset: 2px;
+}
+
+/* Deaktivierte Selects: halbtransparent und nicht klickbar */
+.select select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Chevron-Icon: absolut im rechten Bereich positioniert, reagiert nicht auf Pointer */
+.select .chev {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  width: 0.6rem;
+  height: 0.6rem;
+  pointer-events: none; /* der Pfeil verhindert keine Klicks auf das Select */
+  /* Einfache Pfeilform: nur Border-Bottom und Border-Right, rotiert um 45° */
+  border-right: 2px solid #e6fbff;
+  border-bottom: 2px solid #e6fbff;
+  transform: translateY(-50%) rotate(45deg);
+}
+
 @media (pointer: coarse) {
   body {
     font-size: 1.3rem;

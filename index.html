@@ -18,6 +18,33 @@
         <h1>HDT Dosierverhältnis‑Rechner</h1>
       </header>
 
+      
+      <!-- Material-Auswahl -->
+      <section class="card material-section">
+        <div class="field">
+          <label for="materialFamily">Materialsorte:</label>
+          <!-- Wrapper um das native Select für eigenes Styling und größeren Klickbereich -->
+          <div class="select">
+            <select id="materialFamily">
+              <option value="PS">PS</option>
+              <option value="PU">PU</option>
+              <option value="SI">SI</option>
+            </select>
+            <span class="chev" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="materialSpec">Materialtyp:</label>
+          <!-- Auch das zweite Select bekommt einen Wrapper und Chevron -->
+          <div class="select">
+            <select id="materialSpec">
+              <option value="" disabled selected>Bitte wählen…</option>
+            </select>
+            <span class="chev" aria-hidden="true"></span>
+          </div>
+        </div>
+      </section>
+    
       <!-- Eingabe für Komponenten -->
       <section class="card input-section">
         <div class="field">
@@ -50,6 +77,14 @@
         <!-- Durchschnittswert als farbiger Chip -->
         <span class="value-chip mean-value" id="meanResult">–</span>
       </section>
+      <!-- Toleranz-Prüfung -->
+      <section class="card tolerance-section" id="toleranceBox" style="display:none;">
+        <div><strong>Status:</strong> <span id="tolStatus">–</span></div>
+        <div class="small" id="tolMsg"></div>
+        <!-- Only display the permissible range; there is no single "Soll" target value -->
+        <div class="small" id="tolRange">Bereich: <span id="tolMin">–</span>% – <span id="tolMax">–</span>%</div>
+      </section>
+    
 
       <!-- Installationsbutton (nur sichtbar wenn als PWA installierbar) -->
       <button id="installBtn" class="install-btn" style="display: none;">App installieren</button>
