@@ -14,7 +14,7 @@ function calcLive() {
   const b = parseFloat(inputB.value);
   if (a > 0 && !isNaN(b)) {
     // Verhältnis A zu B berechnen
-    const val = 100 / ((b / a) * 100);
+    const val = (100 * b) / a;
     liveResult.textContent = val.toFixed(2);
     confirmBtn.disabled = false;
   } else {
