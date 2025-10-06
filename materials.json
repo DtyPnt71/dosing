@@ -49,6 +49,12 @@
       "maxPercentB": 7.5
     },
     {
+      "id": "kommerling-koerapur-672",
+      "name": "Kömmerling Körapur 672",
+      "minPercentB": 5.1,
+      "maxPercentB": 5.1
+    },
+    {
       "id": "emcepren-200-classic",
       "name": "Emcepren 200 Classic",
       "minPercentB": 6.5,
