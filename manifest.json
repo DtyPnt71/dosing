@@ -1,6 +1,6 @@
 {
   "name": "Dosierverhältnis-Rechner",
-  "short_name": "HDT Dosier-Rechner",
+  "short_name": "Dosier-Tool",
   "start_url": "./",
   "display": "fullscreen",
   "background_color": "#ffffff",
