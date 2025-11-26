@@ -110,7 +110,6 @@ let MATERIALS = {
   PS: [],
   PU: [],
   SI: [],
-  TEST: [],
 };
 
 const materialFamily = document.getElementById("materialFamily");
@@ -130,7 +129,7 @@ function populateSpecs() {
   if (!materialFamily || !materialSpec) return;
   const family = materialFamily.value || "PU";
   const specs = MATERIALS[family] || [];
-  materialSpec.innerHTML = '<option value="" disabled selected>Bitte wählen…</option>';
+  materialSpec.innerHTML = '<option value="" disabled selected> -Bitte wählen- </option>';
   specs.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s.id;
