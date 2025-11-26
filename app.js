@@ -110,6 +110,7 @@ let MATERIALS = {
   PS: [],
   PU: [],
   SI: [],
+  TEST: [],
 };
 
 const materialFamily = document.getElementById("materialFamily");
