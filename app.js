@@ -137,9 +137,11 @@ function performExport(machineNo, reportDate, creatorName) {
   let tolText = "";
   if (tolRange && tolRange.textContent.trim() !== "") {
     let raw = tolRange.textContent.trim();
-    // Typische Präfixe entfernen: "Bereich: " oder "Zielwert: "
-    raw = raw.replace(/^Bereich:\s*/i, "");
-    raw = raw.replace(/^Zielwert:\s*/i, "");
+    // Alles vor dem letzten Doppelpunkt abschneiden (z.B. "Herstellervorgabe nach Gewicht: 6,20% – 6,50 %")
+    const colonIdx = raw.lastIndexOf(":");
+    if (colonIdx !== -1) {
+      raw = raw.slice(colonIdx + 1).trim();
+    }
     tolText = raw;
   }
 
