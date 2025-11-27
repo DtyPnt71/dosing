@@ -325,3 +325,572 @@ h1 {
     font-size: 1.8rem;
   }
 }
+
+/* ============================
+   Modernisiertes, ruhigeres Design
+   ============================ */
+
+/* Grundlayout */
+body {
+  background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
+  color: #e5e7eb;
+}
+
+/* Hauptcontainer */
+.container {
+  max-width: 780px;
+  padding: 1.25rem;
+}
+
+/* Überschrift */
+h1 {
+  text-align: center;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  margin: 0 0 1rem;
+}
+
+/* Karten: weniger „Kastenoptik“, mehr Luft & Schatten */
+.card {
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  margin: 0.9rem 0;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow:
+    0 8px 16px rgba(15, 23, 42, 0.85),
+    0 0 0 1px rgba(15, 23, 42, 0.6);
+}
+
+/* Input-Bereiche etwas aufgeräumter */
+.input-section .field,
+.material-section .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.input-section label,
+.material-section label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.input-section input {
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  color: #e5e7eb;
+}
+
+/* Select-Styling – etwas weicher */
+.select select {
+  background: #020617;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+}
+
+/* Live-Ergebnis & „Chip“ */
+.value-chip {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #f9fafb;
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mittelwert-Chip leicht abgesetzt */
+.mean-section .value-chip {
+  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+}
+
+/* Bestätigen-Button moderner */
+.confirm-btn {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  color: #f9fafb;
+  border-radius: 999px;
+  padding: 0.55rem 1.4rem;
+  font-weight: 600;
+  border: none;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(22, 163, 74, 0.35);
+}
+
+.confirm-btn:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+/* Verlaufsliste: klarere Struktur */
+.history-section h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.history-section ul {
+  margin: 0.5rem 0 0;
+}
+
+.history-section li {
+  background: #020617;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.history-section .result-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.history-section .value-chip {
+  margin-left: auto;
+}
+
+/* Lösch-Button etwas dezenter */
+.delete-btn {
+  background: transparent;
+  border-radius: 999px;
+  border: none;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  color: #f97373;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+
+.delete-btn:hover {
+  background: rgba(248, 113, 113, 0.12);
+  transform: translateY(-1px);
+}
+
+/* Toleranzkarte – farbcodierte Zustände */
+.tolerance-section {
+  border-left: 4px solid rgba(148, 163, 184, 0.7);
+}
+
+#toleranceBox.ok {
+  border-left-color: #22c55e;
+}
+
+#toleranceBox.low {
+  border-left-color: #facc15;
+}
+
+#toleranceBox.high {
+  border-left-color: #f97373;
+}
+
+#toleranceBox.neutral {
+  border-left-color: rgba(148, 163, 184, 0.7);
+}
+
+.tolerance-section strong {
+  font-size: 0.92rem;
+}
+
+.tolerance-section .small {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+/* Installationsbutton visuell angeglichen */
+.install-btn {
+  margin-top: 0.75rem;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #f9fafb;
+  border-radius: 999px;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+}
+
+/* Mobile-Optimierung */
+@media (min-width: 600px) {
+  .input-section .field,
+  .material-section .field {
+    flex-direction: row;
+    align-items: center;
+  }
+  .input-section label,
+  .material-section label {
+    width: 40%;
+    margin-bottom: 0;
+  }
+  .input-section input,
+  .select {
+    width: 60%;
+  }
+}
+
+
+/* --- Feinjustierung nach Feedback --- */
+
+/* 1) Überschriften besser sichtbar */
+.history-section h2 {
+  color: #f9fafb;
+  font-weight: 600;
+}
+
+/* Material-Labels (Materialsorte / Materialtyp) etwas prominenter */
+.material-section label {
+  color: #f9fafb;
+  font-weight: 600;
+}
+
+/* 2) Grün insgesamt etwas zurücknehmen:
+   - Resultat-Anzeige etwas kühler
+   - OK-Status-Ton eher Richtung Türkis
+*/
+.value {
+  /* statt kräftigem Grün etwas kühleres Türkis */
+  color: #2dd4bf;
+}
+
+/* OK-Bereich im Toleranzkasten mit dezenterem Türkis */
+#toleranceBox.ok {
+  border-left-color: #2dd4bf;
+}
+
+/* 3) Bestätigen-Button etwas kleiner und ruhiger */
+.confirm-btn {
+  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+  color: #f9fafb;
+  border: none;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-left: 0.75rem;
+}
+
+.confirm-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* 4) Toleranz-Kasten: Status-Text kleiner
+      und Farbindikator deutlicher, aber nicht aufdringlich */
+.tolerance-section {
+  border-left-width: 6px; /* etwas breiterer Farbstreifen */
+}
+
+/* Status-Text nach "Status:" leicht verkleinern */
+#tolStatus {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* "Status:" optisch als Label */
+.status-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+}
+
+/* Farbsignal zusätzlich mit einem leichten Halo unterstützen */
+#toleranceBox.ok {
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.4);
+}
+
+#toleranceBox.low {
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.4);
+}
+
+#toleranceBox.high {
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.4);
+}
+
+/* Für Menschen mit Rot-Grün-Schwäche:
+   zusätzlich zu Farbe gibt es immer klaren Text
+   (Im Bereich / Zu wenig / Zu viel), daher nur optische Verstärkung hier. */
+
+
+/* ===== App-Bar / Toolbar für "appigeres" Gefühl ===== */
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 0.25rem;
+}
+
+.app-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.6);
+}
+
+.app-toolbar-left,
+.app-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  color: #9ca3af;
+}
+
+.theme-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9ca3af;
+}
+
+.theme-select {
+  background: #020617;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  padding: 0.25rem 0.75rem;
+  color: #e5e7eb;
+  font-size: 0.8rem;
+}
+
+/* Export-Button Bereich */
+.export-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.export-btn {
+  background: transparent;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  padding: 0.3rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.export-btn::before {
+  content: "⇩";
+  font-size: 0.85rem;
+}
+
+.export-btn:disabled {
+  opacity: 0.4;
+}
+
+/* ===== Theme-Varianten ===== */
+
+/* Standard-Mapping */
+body.theme-default {
+  background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
+}
+
+/* Ocean – etwas kühler, bläulicher */
+body.theme-ocean {
+  background: radial-gradient(circle at top, #0b1120 0, #020617 60%);
+}
+
+body.theme-ocean .card {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+body.theme-ocean .value-chip {
+  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+}
+
+body.theme-ocean .confirm-btn {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+}
+
+body.theme-ocean .mean-section .value-chip {
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+}
+
+/* Sunset – etwas wärmer, leicht rötlich */
+body.theme-sunset {
+  background: radial-gradient(circle at top, #1f2933 0, #111827 55%);
+}
+
+body.theme-sunset .card {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(248, 113, 113, 0.55);
+}
+
+body.theme-sunset .value-chip {
+  background: linear-gradient(135deg, #fb923c, #f97316);
+}
+
+body.theme-sunset .confirm-btn {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+}
+
+body.theme-sunset .mean-section .value-chip {
+  background: linear-gradient(135deg, #f97316, #ec4899);
+}
+
+
+/* ===== Modal für Maschinen-Nr ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.modal-dialog {
+  background: #020617;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  padding: 1rem 1.25rem 0.9rem;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+}
+
+.modal-dialog h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.modal-dialog p {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.btn-secondary,
+.btn-primary {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #e5e7eb;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0ea5e9, #0369a1);
+  color: #f9fafb;
+  border-color: transparent;
+}
+
+
+.tolerance-section {
+  border-left-width: 10px;
+  padding-left: 0.9rem;
+}
+
+/* Farbpunkt vor dem Status-Text */
+#tolStatus::before {
+  content: "";
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  margin-right: 0.4rem;
+  background: #6b7280; /* neutral */
+}
+
+#toleranceBox.ok #tolStatus::before {
+  background: #2dd4bf;
+}
+
+#toleranceBox.low #tolStatus::before {
+  background: #facc15;
+}
+
+#toleranceBox.high #tolStatus::before {
+  background: #f97373;
+}
+
+
+.clear-btn {
+  background: transparent;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.8);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #e5e7eb;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+.clear-btn:hover {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+
+.modal-label {
+  display: block;
+  margin-top: 0.6rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}

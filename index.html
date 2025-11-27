@@ -15,8 +15,23 @@
   <body>
     <main class="container">
       <header class="header">
-        <h1>HDT Dosier-Tool</h1>
+        <h1>../..</h1>
       </header>
+      <div class="app-toolbar">
+        <div class="app-toolbar-left">
+          <span class="app-badge">HDT GmbH - Tool Dosierung</span>
+        </div>
+        <div class="app-toolbar-right">
+          <label for="themeSelect" class="theme-label">Theme:</label>
+          <select id="themeSelect" class="theme-select">
+            <option value="default">Standard</option>
+            <option value="ocean">Design 1</option>
+            <option value="sunset">Design 2</option>
+          </select>
+          <button id="clearCacheBtn" class="clear-btn">Cache leeren</button>
+        </div>
+      </div>
+
 
       
       <!-- Material-Auswahl -->
@@ -59,7 +74,7 @@
 
       <!-- Live Ergebnis und Bestätigen -->
       <section class="card result-section">
-        <span class="result-label">Ergebnis der aktuellen Probe:</span>
+        <span class="result-label">Ergebnis aktuelle Probe:</span>
         <!-- Ergebniswert als farbiger Chip -->
         <span class="value-chip" id="liveResult">–</span>
         <button id="confirmBtn" class="confirm-btn" disabled>Bestätigen</button>
@@ -71,20 +86,65 @@
         <ul id="resultList"></ul>
       </section>
 
+      <!-- Export-Funktionen -->
+      <section class="export-section">
+        <button id="exportBtn" class="export-btn" disabled>
+          Bericht exportieren
+        </button>
+      </section>
+
+
       <!-- Durchschnittswert -->
       <section class="card mean-section">
-        <span>Mittelwert gesamt:</span>
+        <span>Mittelwert:</span>
         <!-- Durchschnittswert als farbiger Chip -->
         <span class="value-chip mean-value" id="meanResult">–</span>
       </section>
       <!-- Toleranz-Prüfung -->
       <section class="card tolerance-section" id="toleranceBox" style="display:none;">
-        <div><strong>Status:</strong> <span id="tolStatus">–</span></div>
+        <div><strong class="status-label">Status:</strong> <span id="tolStatus">–</span></div>
         <div class="small" id="tolMsg"></div>
         <!-- Only display the permissible range; there is no single "Soll" target value -->
         <div class="small" id="tolRange">Bereich: <span id="tolMin">–</span>% – <span id="tolMax">–</span>%</div>
       </section>
     
+
+
+      <!-- Maschinen-Nr Modal -->
+      <div id="machineModal" class="modal-backdrop" style="display:none;">
+        <div class="modal-dialog">
+          <h2>Berichtsdaten</h2>
+          <p>Bitte Angaben für den Bericht eintragen:</p>
+          <label class="modal-label" for="machineInput">Maschinen-Nr</label>
+          <input
+            type="text"
+            id="machineInput"
+            class="modal-input"
+            placeholder="z.B. 1221"
+            autocomplete="off"
+          />
+          <label class="modal-label" for="machineDateInput">Datum</label>
+          <input
+            type="text"
+            id="machineDateInput"
+            class="modal-input"
+            placeholder="TT.MM.JJJJ"
+            autocomplete="off"
+          />
+          <label class="modal-label" for="machineCreatorInput">Erstellt durch</label>
+          <input
+            type="text"
+            id="machineCreatorInput"
+            class="modal-input"
+            placeholder="Name des Erstellers"
+            autocomplete="off"
+          />
+          <div class="modal-actions">
+            <button type="button" id="machineCancel" class="btn-secondary">Abbrechen</button>
+            <button type="button" id="machineConfirm" class="btn-primary">Weiter &amp; exportieren</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Installationsbutton (nur sichtbar wenn als PWA installierbar) -->
       <button id="installBtn" class="install-btn" style="display: none;">App installieren</button>
