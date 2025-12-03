@@ -316,9 +316,9 @@ function applyLanguage() {
     const langMenuItem = document.getElementById('langMenuItem');
     if (langMenuItem) {
       if (CURRENT_LANG === 'de') {
-        langMenuItem.textContent = '友 DE';
+        langMenuItem.textContent = '🗺 DE';
       } else {
-        langMenuItem.textContent = '友 EN';
+        langMenuItem.textContent = '🗺 EN';
       }
     }
 
@@ -326,13 +326,13 @@ function applyLanguage() {
     const menuPanel = document.getElementById('menuPanel');
     if (menuPanel) {
       const designLabelEl = menuPanel.querySelector('.menu-label');
-      if (designLabelEl) designLabelEl.textContent = '🎨 ' + t('menu_design');
+      if (designLabelEl) designLabelEl.textContent = '---🎨 ' + t('menu_design')---;
 
       const cacheBtn = menuPanel.querySelector('button[data-action="clearCache"]');
       if (cacheBtn) cacheBtn.textContent = '♻️ ' + t('menu_cache');
 
       const addMatBtn = menuPanel.querySelector('button[data-action="addMaterial"]');
-      if (addMatBtn) addMatBtn.textContent = '➕ ' + t('menu_add_material');
+      if (addMatBtn) addMatBtn.textContent = '💾 ' + t('menu_add_material');
     }
   } catch (e) {
     console.error('Fehler beim Anwenden der Sprache:', e);
