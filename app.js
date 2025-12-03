@@ -316,9 +316,9 @@ function applyLanguage() {
     const langMenuItem = document.getElementById('langMenuItem');
     if (langMenuItem) {
       if (CURRENT_LANG === 'de') {
-        langMenuItem.textContent = '🇩🇪 DE';
+        langMenuItem.textContent = '🇩🇪 DE (aktiv)';
       } else {
-        langMenuItem.textContent = '🇬🇧 EN';
+        langMenuItem.textContent = '🇬🇧 EN (active)';
       }
     }
 
