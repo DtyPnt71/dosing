@@ -1306,7 +1306,7 @@ async function loadAppVersion() {
     const version = manifest.version || "1.0.0";
     const footer = document.getElementById("appFooter");
     if (footer) {
-      footer.textContent = "Version " + version;
+      footer.textContent = "errorcode " + version;
     }
   } catch (e) {
     console.error("Version konnte nicht geladen werden:", e);
