@@ -1,3 +1,4 @@
+window.APP_VERSION = "2.0b";
 window.EXPORT_EMAIL = "timo.burian@h-d-tec.de";
 
 let deferredPrompt;
