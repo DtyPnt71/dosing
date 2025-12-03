@@ -105,7 +105,7 @@ h1 {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  padding: 0.75rem 1rem;
+  padding: 0.3rem 0.5rem;
   background: #1e2a38;
   border: 2px solid #00bfcf;
   border-radius: 6px;
@@ -147,7 +147,7 @@ h1 {
 
 .mean-value {
   font-weight: bold;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: #4caf50;
 }
 
@@ -204,7 +204,7 @@ h1 {
 /* Responsive Typografie */
 @media (min-width: 600px) {
   body {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
   }
   input,
   button {
@@ -299,20 +299,20 @@ h1 {
 
 @media (min-width: 768px) and (max-width: 1280px) {
   body {
-    font-size: 1.6rem;
+    font-size: 1.05rem;
   }
   input,
   button,
   .install-btn,
   .confirm-btn {
-    font-size: 1.6rem;
+    font-size: 1.05rem;
     padding: 1.2rem;
   }
   .result-section .result-value {
-    font-size: 1.8rem;
+    font-size: 1.2rem;
   }
   .history-section li {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     padding: 1rem 1.5rem;
   }
   .history-section button {
@@ -434,7 +434,6 @@ h1 {
   margin-top: 0;
   font-size: 1.05rem;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: #9ca3af;
 }
 
@@ -893,4 +892,160 @@ body.theme-sunset .mean-section .value-chip {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #9ca3af;
+}
+
+
+/* ===== PDF-Report Layout ===== */
+.pdf-report {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10pt;
+  color: #0f172a;
+  padding: 12mm;
+}
+
+.pdf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6mm;
+}
+
+.pdf-logo-wrap {
+  flex: 0 0 auto;
+}
+
+.pdf-logo {
+  max-height: 18mm;
+  max-width: 40mm;
+  object-fit: contain;
+}
+
+.pdf-company {
+  flex: 1 1 auto;
+  text-align: right;
+  font-weight: 600;
+  font-size: 11pt;
+}
+
+.pdf-meta {
+  margin-bottom: 4mm;
+  font-size: 9.5pt;
+}
+
+.pdf-meta .pdf-label {
+  font-weight: 600;
+  margin-right: 2mm;
+}
+
+.pdf-separator {
+  border-top: 1px solid #cbd5e1;
+  margin: 3mm 0 4mm 0;
+}
+
+.pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 4mm;
+  font-size: 9.5pt;
+}
+
+.pdf-table th,
+.pdf-table td {
+  border: 1px solid #cbd5e1;
+  padding: 2mm 3mm;
+  text-align: left;
+}
+
+.pdf-table th {
+  background: #e5e7eb;
+  font-weight: 600;
+}
+
+.pdf-mean-row {
+  margin-top: 2mm;
+  margin-bottom: 6mm;
+  font-size: 9.5pt;
+}
+
+.pdf-footer {
+  font-size: 9.5pt;
+  margin-top: 4mm;
+}
+
+.pdf-footer .pdf-label {
+  font-weight: 600;
+}
+
+
+/* === Drei-Punkte-Menü Styles === */
+.menu-wrapper {
+  position: relative;
+}
+
+.icon-btn {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #e5e7eb;
+}
+
+.icon-btn:hover {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.menu-panel {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.25rem;
+  min-width: 190px;
+  background: #020617;
+  border-radius: 0.9rem;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.9);
+  padding: 0.3rem 0;
+  display: none;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  z-index: 60;
+}
+
+.menu-panel.open {
+  display: block;
+}
+
+.menu-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.menu-item:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+/* === Mobile-Optimierung === */
+
+/* Menu label & active state for theme items */
+.menu-label {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+.menu-item.active {
+  background: rgba(148, 163, 184, 0.25);
+  font-weight: 600;
 }
