@@ -824,7 +824,7 @@ function updateList() {
     li.innerHTML = `
       <span class="result-label">Probe ${i + 1}</span>
       <span class="value-chip">${r.toFixed(2)}</span>
-      <button class="delete-btn" onclick="deleteResult(${i})">×</button>
+      <button class="delete-btn" onclick="deleteResult(${i})">❌</button>
     `;
     resultList.appendChild(li);
   });
