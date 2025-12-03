@@ -326,7 +326,7 @@ function applyLanguage() {
     const menuPanel = document.getElementById('menuPanel');
     if (menuPanel) {
       const designLabelEl = menuPanel.querySelector('.menu-label');
-      if (designLabelEl) designLabelEl.textContent = '---🎨 ' + t('menu_design');
+      if (designLabelEl) designLabelEl.textContent = '🎨 ' + t('menu_design');
 
       const cacheBtn = menuPanel.querySelector('button[data-action="clearCache"]');
       if (cacheBtn) cacheBtn.textContent = '♻️ ' + t('menu_cache');
