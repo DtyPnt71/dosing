@@ -1,4 +1,5 @@
 window.EXPORT_EMAIL = "timo.burian@h-d-tec.de";
+window.EXPORT_EMAIL = "info@h-d-tec.de";
 
 let deferredPrompt;
 let results = [];
