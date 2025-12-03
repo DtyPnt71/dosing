@@ -1,8 +1,9 @@
 {
-  "name": "Dosierverhältnis-Rechner",
+  "name": "Please wait....dependencied are loading",
   "short_name": "Dosier-Tool",
   "start_url": "./",
   "display": "fullscreen",
+  "version": "2.0b",
   "background_color": "#ffffff",
   "theme_color": "#0f0f0f",
   "icons": [
