@@ -1,4 +1,3 @@
-window.APP_VERSION = "2.0b";
 window.EXPORT_EMAIL = "timo.burian@h-d-tec.de";
 
 let deferredPrompt;
@@ -1297,3 +1296,22 @@ document.querySelectorAll('.select').forEach((wrapper) => {
     }
   });
 });
+
+// --- App Version automatisch laden ---
+async function loadAppVersion() {
+  try {
+    const res = await fetch('manifest.json', { cache: 'no-store' });
+    const manifest = await res.json();
+    const version = manifest.version || "1.0.0";
+    const footer = document.getElementById("appFooter");
+    if (footer) {
+      footer.textContent = "Version " + version;
+    }
+  } catch (e) {
+    console.error("Version konnte nicht geladen werden:", e);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadAppVersion);
+// --- Ende Versionscode ---
+
