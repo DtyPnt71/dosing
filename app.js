@@ -1303,7 +1303,7 @@ async function loadAppVersion() {
   try {
     const res = await fetch('manifest.json', { cache: 'no-store' });
     const manifest = await res.json();
-    const version = manifest.version || "1.0.0";
+    const version = manifest.version;
     const footer = document.getElementById("appFooter");
     if (footer) {
       footer.textContent = "Version " + version;
