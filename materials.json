@@ -170,6 +170,13 @@
       "targetPercentB": 9.5
     },
     {
+      "id": "igk-311",
+      "name": "IGK 311",
+      "minPercentB": 7.06,
+      "maxPercentB": 9.55,
+      "targetPercentB": 8.3
+    },
+    {
       "id": "kommerling-gd116",
       "name": "Kömmerling GD116",
       "minPercentB": 8.8,
