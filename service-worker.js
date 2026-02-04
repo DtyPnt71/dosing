@@ -1,19 +1,24 @@
 // Name des Caches mit Versionsnummer, damit alte Caches entfernt werden können
-const CACHE_NAME = 'dosing-cache-v1';
+const CACHE_NAME = 'dosing-cache-v4';
 
 // Dateien, die beim Installieren vorab im Cache gespeichert werden
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/styles.css',
-  '/style.css',
-  '/manifest.json',
-  '/install.js',
-  '/service-worker.js',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/favicon.ico'
+  './',
+  './index.html',
+  './app.js',
+  './styles.css',
+  './style.css',
+  './materials.json',
+  './creator-names.json',
+  './manifest.json',
+  './install.js',
+  './service-worker.js',
+  './html2pdf.bundle.js',
+  './logo.png',
+  './icon-192x192.png',
+  './icon-512x512.png',
+  './favicon.ico',
+  './favicon.png'
 ];
 
 // Beim Installieren alle Ressourcen cachen

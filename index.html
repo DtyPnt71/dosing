@@ -5,281 +5,432 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f0f0f" />
     <title>HDT GmbH - Dosing</title>
-    <!-- Favicon & Manifest -->
+
     <link rel="icon" href="favicon.ico" />
     <link rel="manifest" href="manifest.json" />
-    <!-- Styles -->
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main class="container">
-      <header class="header">
-        <h1>⚖️</h1>
-      </header>
-      <div class="app-toolbar">
-        <div class="app-toolbar-left">
-          <span class="app-badge">HDT GmbH</span>
+    <div id="maintenanceOverlay" class="maintenance-overlay" role="status" aria-live="polite">
+      <div class="maintenance-card">
+        <img class="maintenance-logo" src="logo.png" alt="HDT Logo" />
+        <div class="maintenance-gear" aria-hidden="true"></div>
+        <div class="maintenance-title">Wartungsarbeiten / Maintenance</div>
+        <p class="maintenance-text"><strong>DE:</strong> Derzeit werden Wartungsarbeiten durchgeführt. Bitte versuchen Sie es später erneut. Vielen Dank für Ihr Verständnis.</p>
+        <p class="maintenance-text"><strong>EN:</strong> We are currently performing maintenance. Please try again later. Thank you for your understanding.</p>
+        <div class="maintenance-divider"></div>
+        <div class="maintenance-actions">
+          <button id="maintenanceReloadBtn" class="maintenance-reload" type="button">Seite neu laden / Reload</button>
         </div>
-        <div class="app-toolbar-right">
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        function enableMaintenance(){
+          document.body.classList.add('is-maintenance');
+          var btn = document.getElementById('maintenanceReloadBtn');
+          if (btn) btn.addEventListener('click', function(){ location.reload(); });
+        }
+        // Read manifest.json maintenance flag
+        fetch('manifest.json', { cache: 'no-store' })
+          .then(function(r){ return r.json(); })
+          .then(function(m){ if (m && m.maintenance === true) enableMaintenance(); })
+          .catch(function(){ /* ignore */ });
+      })();
+    </script>
+
+    <main class="container">
+      <header class="app-header">
+        <div class="brand">
+          <img class="brand-logo" src="logo.png" alt="HDT Logo" />
+          <div class="brand-text">
+            <div class="brand-title" id="headerTitle">Dosierung</div>
+            <div class="brand-subtitle" id="headerSubtitle">Tool</div>
+          </div>
+        </div>
+
+        <div class="toolbar">
           <div class="menu-wrapper">
-            <button id="menuBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Menü">
-              ⚙️
-            </button>
-            <div id="menuPanel" class="menu-panel">
-              Language ⤵︎<button id="langMenuItem" class="menu-item" data-action="lang"></button>
-              Add ⤵︎<button class="menu-item" data-action="addMaterial">💾 Material hinzufügen</button>
-              Theme ⤵︎<button class="menu-item" data-action="setTheme" data-theme="default" id="themeDefaultItem">» Standard</button>
-              <button class="menu-item" data-action="setTheme" data-theme="ocean" id="themeOceanItem">» Blue</button>
-              <button class="menu-item" data-action="setTheme" data-theme="sunset" id="themeSunsetItem">» Red</button>
-              Delete local ⤵︎<button class="menu-item" data-action="clearCache">♻️</button>
+            <button id="menuBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Menü">☰</button>
+
+            <div id="menuPanel" class="menu-panel" role="menu" aria-label="Einstellungen">
+              <div class="menu-group">
+                <div class="menu-title" id="menuExportTitle">Export</div>
+                <button class="menu-item" data-action="export" id="exportMenuItem"></button>
+              </div>
+
+              <div class="menu-sep"></div>
+
+              <div class="menu-group">
+                <div class="menu-title" id="menuLanguageTitle">Sprache</div>
+                <button id="langMenuItem" class="menu-item" data-action="lang"></button>
+              </div>
+
+              <div class="menu-sep"></div>
+
+              <div class="menu-group">
+                <div class="menu-title" id="menuDataTitle">Daten</div>
+                <button class="menu-item" data-action="addMaterial" id="addMaterialMenuItem"></button>
+                <button class="menu-item" data-action="manageMaterials" id="manageMaterialsMenuItem"></button>
+                <button class="menu-item" data-action="clearCache" id="clearCacheMenuItem">Lokale Daten zurücksetzen</button>
+              </div>
+
+              <div class="menu-sep"></div>
+
+              <div class="menu-group">
+                <div class="menu-title" id="menuInfoTitle">Info</div>
+                <button class="menu-item" data-action="openAbout" id="aboutMenuItem">Über dieses Tool</button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <footer id="appFooter" style="text-align:center; opacity:0.6; font-size:12px; margin-top:20px;">
-      Version wird geladen…
-      </footer>
-      
-      <!-- Material-Auswahl -->
-      <section class="card material-section">
-        <div class="field">
-          <label for="materialFamily">Materialsorte:</label>
-          <!-- Wrapper um das native Select für eigenes Styling und größeren Klickbereich -->
-          <div class="select">
-            <select id="materialFamily">
-              <option value="PS">PS</option>
+      <div class="content" id="stepper">
+        <div class="step-label" id="step1" data-step="1">Schritt 1</div>
+
+        <!-- Material-Auswahl -->
+        <section class="card material-section">
+          <div class="field">
+            <label for="materialFamily">Materialsorte:</label>
+            <div class="select">
+              <select id="materialFamily">
+                <option value="PS">PS</option>
+                <option value="PU">PU</option>
+                <option value="SI">SI</option>
+              </select>
+              <span class="chev" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="materialSpec">Materialtyp:</label>
+            <div class="select">
+              <select id="materialSpec">
+                <option value="" disabled selected>failed to load</option>
+              </select>
+              <span class="chev" aria-hidden="true"></span>
+            </div>
+          </div>
+        </section>
+
+        <div class="step-label" id="step2" data-step="2">Schritt 2</div>
+
+        <!-- Eingabe für Komponenten -->
+        <section class="card input-section">
+          <div class="field">
+            <label for="inputA">Komponente A:</label>
+            <input type="number" id="inputA" min="0" step="any" />
+          </div>
+          <div class="field">
+            <label for="inputB">Komponente B:</label>
+            <input type="number" id="inputB" min="0" step="any" />
+          </div>
+        </section>
+
+        <div class="step-label" id="step3" data-step="3">Schritt 3</div>
+
+        <!-- Live Ergebnis und Bestätigen -->
+        <section class="card result-section" aria-live="polite">
+          <span class="result-label" id="resultCurrentLabel">Ergebnis aktuelle Probe:</span>
+          <span class="value-chip" id="liveResult">–</span>
+          <button id="confirmBtn" class="confirm-btn" disabled>Bestätigen</button>
+        </section>
+
+        <div class="section-divider"></div>
+        <div class="section-title" id="historySectionTitle">Verlauf</div>
+
+        <!-- Liste der gespeicherten Werte -->
+        <section class="card history-section">
+          <h2 id="historyCardTitle">Verlauf (max. 5 Proben)</h2>
+          <ul id="resultList"></ul>
+        </section>
+
+        <!-- Durchschnittswert -->
+        <section class="card mean-section">
+          <span id="meanLabel">Mittelwert:</span>
+          <span class="value-chip mean-value" id="meanResult">–</span>
+        </section>
+
+        <!-- Toleranz-Prüfung -->
+        <section class="card tolerance-section" id="toleranceBox" style="display:none;">
+          <div><strong class="status-label" id="statusLabel">Status:</strong> <span id="tolStatus">–</span></div>
+          <div class="small" id="tolMsg"></div>
+          <div class="small" id="tolRange">Bereich: <span id="tolMin">–</span>% – <span id="tolMax">–</span>%</div>
+        </section>
+
+        <!-- Versteckter PDF-Report für Export -->
+        <div id="pdfReport" class="pdf-report" style="display:none;">
+          <div class="pdf-header">
+            <div class="pdf-logo-wrap">
+              <img src="logo.png" alt="Logo" class="pdf-logo" />
+            </div>
+            <div class="pdf-company"></div>
+          </div>
+          <div class="pdf-meta">
+            <div><span class="pdf-label">Datum:        </span> <span id="pdfDate"></span></div>
+            <div><span class="pdf-label">Maschinen-Nr: </span> <span id="pdfMachine"></span></div>
+            <div><span class="pdf-label">Materialsorte:</span> <span id="pdfFamily"></span></div>
+            <div><span class="pdf-label">Materialtyp:  </span> <span id="pdfSpec"></span></div>
+            <div><span class="pdf-label">Dosierung:    </span> <span id="pdfDose"></span></div>
+          </div>
+          <div class="pdf-separator"></div>
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>Probe</th>
+                <th>Ergebnis (%)</th>
+              </tr>
+            </thead>
+            <tbody id="pdfProbes"></tbody>
+          </table>
+          <div class="pdf-comment-block">
+            <div class="pdf-label">Kommentar:</div>
+            <div id="pdfComment" class="pdf-comment"></div>
+          </div>
+          <div class="pdf-mean-row">
+            <span class="pdf-label">Mittelwert:</span>
+            <span id="pdfMean"></span>
+          </div>
+          <div class="pdf-footer">
+            <span class="pdf-label">Erstellt durch:</span>
+            <span id="pdfCreator"></span>
+          </div>
+        </div>
+
+        <!-- Maschinen-Nr Modal -->
+        <div id="machineModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-dialog">
+            <h2 id="machineModalTitle">Berichtsdaten</h2>
+            <p id="machineModalIntro">Bitte Angaben für den Bericht eintragen:</p>
+            <label class="modal-label" for="machineInput">Maschinen-Nr</label>
+            <input type="text" id="machineInput" class="modal-input" placeholder="z.B. 1221" autocomplete="off" />
+            <label class="modal-label" for="machineDateInput">Datum</label>
+            <input type="text" id="machineDateInput" class="modal-input" placeholder="TT.MM.JJJJ" autocomplete="off" />
+            <label class="modal-label" for="machineCreatorSelect" id="machineCreatorLabel">Erstellt durch</label>
+            <select id="machineCreatorSelect" class="modal-input" autocomplete="off">
+              <option value="" selected disabled>Bitte wählen</option>
+              <!-- Optionen werden aus creator-names.json geladen -->
+              <option value="__other__">Andere …</option>
+            </select>
+            <input type="text" id="machineCreatorOtherInput" class="modal-input" placeholder="Name (benutzerdefiniert)" autocomplete="off" style="display:none;" />
+
+            <label class="modal-label" for="machineCommentInput" id="machineCommentLabel">Kommentar (für den Bericht)</label>
+            <textarea id="machineCommentInput" class="modal-input" rows="3" placeholder="Optionaler Kommentar für den PDF-Bericht" style="resize: vertical;"></textarea>
+            <p></p>
+            <p></p>
+            <h2 id="machineModalInfoTitle">Info:</h2>
+            <p id="machineModalInfoText">Export unter iOS inkompatibel!</p>
+            <div class="modal-actions">
+              <button type="button" id="machineCancel" class="btn-secondary">Abbrechen</button>
+              <button type="button" id="machineConfirm" class="btn-primary">Weiter &amp; exportieren</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Passwort (intern) -->
+        <div id="exportAuthModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-dialog">
+            <h2 id="exportAuthTitle">Interner Export</h2>
+            <p id="exportAuthIntro" class="small">Diese Funktion ist nur für interne Zwecke gedacht. Der PDF-Bericht wird im HDT-Layout erzeugt.</p>
+
+            <label class="modal-label" for="exportPasswordInput" id="exportPasswordLabel">Passwort</label>
+            <input id="exportPasswordInput" class="modal-input" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" />
+            <div id="exportAuthError" class="small" style="margin-top:0.35rem; color: var(--danger); display:none;"></div>
+
+            <div class="modal-actions">
+              <button type="button" id="exportAuthCancel" class="btn-secondary">Abbrechen</button>
+              <button type="button" id="exportAuthConfirm" class="btn-primary">Weiter</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Material hinzufügen / bearbeiten Modal -->
+        <div id="materialModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-dialog">
+            <h2 id="materialModalTitle">Material hinzufügen</h2>
+            <p id="materialModalIntro">Bitte die Daten für das neue Material eintragen:</p>
+            <label class="modal-label" for="newMatFamily">Materialsorte</label>
+            <select id="newMatFamily" class="modal-input">
               <option value="PU">PU</option>
+              <option value="PS">PS</option>
               <option value="SI">SI</option>
             </select>
-            <span class="chev" aria-hidden="true"></span>
+
+            <label class="modal-label" for="newMatId">Material-ID (intern)</label>
+            <input type="text" id="newMatId" class="modal-input" placeholder="z.B. Emcepren-510" autocomplete="off" />
+
+            <label class="modal-label" for="newMatName">Material-Name</label>
+            <input type="text" id="newMatName" class="modal-input" placeholder="Anzeigename Materialliste" autocomplete="off" />
+
+            <label class="modal-label" for="newMatTarget">Ziel-Dosierung in % (opt.)</label>
+            <input type="number" step="0.01" id="newMatTarget" class="modal-input" placeholder="z.B. 10" />
+
+            <label class="modal-label" for="newMatMin">Dosierung in % von</label>
+            <input type="number" step="0.01" id="newMatMin" class="modal-input" placeholder="z.B. 9,00" />
+
+            <label class="modal-label" for="newMatMax">Dosierung in % bis</label>
+            <input type="number" step="0.01" id="newMatMax" class="modal-input" placeholder="z.B. 11,00" />
+
+            <div class="modal-actions">
+              <button id="newMatCancel" class="modal-btn secondary">Abbrechen</button>
+              <button id="newMatConfirm" class="modal-btn primary">Speichern</button>
+            </div>
+            <p style="margin-top:0.5rem; font-size:0.8rem; opacity:0.7;" id="materialModalHint">Hinweis: Dieses Material wird lokal auf diesem Gerät gespeichert und mit einem ★ markiert.</p>
           </div>
         </div>
-        <div class="field">
-          <label for="materialSpec">Materialtyp:</label>
-          <!-- Auch das zweite Select bekommt einen Wrapper und Chevron -->
-          <div class="select">
-            <select id="materialSpec">
-              <option value="" disabled selected>failed to load</option>
-            </select>
-            <span class="chev" aria-hidden="true"></span>
+
+        <!-- Custom-Material verwalten Modal -->
+        <div id="manageMaterialsModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-dialog">
+            <div class="modal-header">
+              <h2 id="manageMaterialsTitle">Custom-Materialien verwalten</h2>
+              <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
+            </div>
+            <div class="modal-body">
+              <p class="small" id="manageMaterialsIntro">Hier können lokal gespeicherte Materialien bearbeitet oder gelöscht werden.</p>
+              <div id="manageMaterialsList" class="manage-materials-list"></div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+            </div>
           </div>
         </div>
-      </section>
-    
-      <!-- Eingabe für Komponenten -->
-      <section class="card input-section">
-        <div class="field">
-          <label for="inputA">Komponente A:</label>
-          <input type="number" id="inputA" min="0" step="any" />
-        </div>
-        <div class="field">
-          <label for="inputB">Komponente B:</label>
-          <input type="number" id="inputB" min="0" step="any" />
-        </div>
-      </section>
 
-      <!-- Live Ergebnis und Bestätigen -->
-      <section class="card result-section">
-        <span class="result-label">Ergebnis aktuelle Probe:</span>
-        <!-- Ergebniswert als farbiger Chip -->
-        <span class="value-chip" id="liveResult">–</span>
-        <button id="confirmBtn" class="confirm-btn" disabled>Bestätigen</button>
-      </section>
-
-      <!-- Liste der gespeicherten Werte -->
-      <section class="card history-section">
-        <h2>Verlauf (max. 5 Proben)</h2>
-        <ul id="resultList"></ul>
-      </section>
-
-      <!-- Export-Funktionen -->
-      <section class="export-section">
-        <button id="exportBtn" class="export-btn" disabled>
-          Bericht exportieren
-        </button>
-      </section>
-
-
-      <!-- Durchschnittswert -->
-      <section class="card mean-section">
-        <span>Mittelwert:</span>
-        <!-- Durchschnittswert als farbiger Chip -->
-        <span class="value-chip mean-value" id="meanResult">–</span>
-      </section>
-      <!-- Toleranz-Prüfung -->
-      <section class="card tolerance-section" id="toleranceBox" style="display:none;">
-        <div><strong class="status-label">Status:</strong> <span id="tolStatus">–</span></div>
-        <div class="small" id="tolMsg"></div>
-        <!-- Only display the permissible range; there is no single "Soll" target value -->
-        <div class="small" id="tolRange">Bereich: <span id="tolMin">–</span>% – <span id="tolMax">–</span>%</div>
-      </section>
-    
-
-
-
-      <!-- Versteckter PDF-Report für Export -->
-      <div id="pdfReport" class="pdf-report" style="display:none;">
-        <div class="pdf-header">
-          <div class="pdf-logo-wrap">
-            <img src="logo.png" alt="Logo" class="pdf-logo" />
-          </div>
-          <div class="pdf-company">
-            
-          </div>
-        </div>
-        <div class="pdf-meta">
-          <div><span class="pdf-label">Datum:        </span> <span id="pdfDate"></span></div>
-          <div><span class="pdf-label">Maschinen-Nr: </span> <span id="pdfMachine"></span></div>
-          <div><span class="pdf-label">Materialsorte:</span> <span id="pdfFamily"></span></div>
-          <div><span class="pdf-label">Materialtyp:  </span> <span id="pdfSpec"></span></div>
-          <div><span class="pdf-label">Dosierung:    </span> <span id="pdfDose"></span></div>
-        </div>
-        <div class="pdf-separator"></div>
-        <table class="pdf-table">
-          <thead>
-            <tr>
-              <th>Probe</th>
-              <th>Ergebnis (%)</th>
-            </tr>
-          </thead>
-          <tbody id="pdfProbes"></tbody>
-        </table>
-        <div class="pdf-mean-row">
-          <span class="pdf-label">Mittelwert:</span>
-          <span id="pdfMean"></span>
-        </div>
-        <div class="pdf-footer">
-          <span class="pdf-label">Erstellt durch:</span>
-          <span id="pdfCreator"></span>
-        </div>
+        <!-- Installationsbutton (nur sichtbar wenn als PWA installierbar) -->
+        <button id="installBtn" class="install-btn" style="display: none;">App installieren</button>
       </div>
 
-      <!-- Maschinen-Nr Modal -->
-      <div id="machineModal" class="modal-backdrop" style="display:none;">
+      <footer id="appFooter" class="app-footer" aria-label="Footer">
+        <button class="footer-link" type="button" data-open-modal="impressumModal">Impressum</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link" type="button" data-open-modal="homepageModal">Homepage</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link" type="button" data-open-modal="helpModal">Hilfe</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link" type="button" data-open-modal="supportModal">Technischer Support</button>
+        <span class="footer-sep">·</span>
+        <button class="footer-link" type="button" data-open-modal="rightsModal">Rechte</button>
+      </footer>
+
+      <!-- Footer Modals -->
+      <div id="impressumModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
-          <h2>Berichtsdaten</h2>
-          <p>Bitte Angaben für den Bericht eintragen:</p>
-          <p> </p>
-          <label class="modal-label" for="machineInput">Maschinen-Nr</label>
-          <input
-            type="text"
-            id="machineInput"
-            class="modal-input"
-            placeholder="z.B. 1221"
-            autocomplete="off"
-          />
-          <label class="modal-label" for="machineDateInput">Datum</label>
-          <input
-            type="text"
-            id="machineDateInput"
-            class="modal-input"
-            placeholder="TT.MM.JJJJ"
-            autocomplete="off"
-          />
-          <label class="modal-label" for="machineCreatorInput">Erstellt durch</label>
-          <input
-            type="text"
-            id="machineCreatorInput"
-            class="modal-input"
-            placeholder="Name des Erstellers"
-            autocomplete="off"
-          />
-          <p></p>
-          <p></p>
-          <h2>Info:</h2>
-          <p> Export unter iOS inkompatibel! </p>
+          <div class="modal-header">
+            <h2>Impressum</h2>
+            <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
+          </div>
+          <div class="modal-body">
+            <p><strong>HDT Hochdruck-Dosier-Technik GmbH</strong><br/>
+            Müllerstraße 7<br/>
+            46242 Bottrop<br/>
+            Deutschland</p>
+            <p>Telefon: +49 (0) 20 41/10 13 02</p>
+            <p>E-Mail: info@h-d-tec.de</p>
+          </div>
           <div class="modal-actions">
-            <button type="button" id="machineCancel" class="btn-secondary">Abbrechen</button>
-            <button type="button" id="machineConfirm" class="btn-primary">Weiter &amp; exportieren</button>
+            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
           </div>
         </div>
       </div>
 
-      
-      <!-- Material hinzufügen Modal -->
-      <div id="materialModal" class="modal-backdrop" style="display:none;">
+      <div id="homepageModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
-          <h2>Material hinzufügen</h2>
-          <p>Bitte die Daten für das neue Material eintragen:</p>
-          <label class="modal-label" for="newMatFamily">Materialsorte</label>
-          <select id="newMatFamily" class="modal-input">
-            <option value="PU">PU</option>
-            <option value="PS">PS</option>
-            <option value="SI">SI</option>
-          </select>
-
-          <label class="modal-label" for="newMatId">Material-ID (intern)</label>
-          <input
-            type="text"
-            id="newMatId"
-            class="modal-input"
-            placeholder="z.B. Emcepren-510"
-            autocomplete="off"
-          />
-
-          <label class="modal-label" for="newMatName">Material-Name</label>
-          <input
-            type="text"
-            id="newMatName"
-            class="modal-input"
-            placeholder="Anzeigename Materialliste"
-            autocomplete="off"
-          />
-
-          <label class="modal-label" for="newMatTarget">Ziel-Dosierung in % (opt.)</label>
-          <input
-            type="number"
-            step="0.01"
-            id="newMatTarget"
-            class="modal-input"
-            placeholder="z.B. 10"
-          />
-
-          <label class="modal-label" for="newMatMin">Dosierung in % von</label>
-          <input
-            type="number"
-            step="0.01"
-            id="newMatMin"
-            class="modal-input"
-            placeholder="z.B. 9,00"
-          />
-
-          <label class="modal-label" for="newMatMax">Dosierung in % bis</label>
-          <input
-            type="number"
-            step="0.01"
-            id="newMatMax"
-            class="modal-input"
-            placeholder="z.B. 11,00"
-          />
-
-          <div class="modal-actions">
-            <button id="newMatCancel" class="modal-btn secondary">Abbrechen</button>
-            <button id="newMatConfirm" class="modal-btn primary">Speichern</button>
+          <div class="modal-header">
+            <h2>Homepage</h2>
+            <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
-          <p style="margin-top:0.5rem; font-size:0.8rem; opacity:0.7;">
-            Hinweis: Dieses Material wird temporär auf deinem gespeichert und mit einem ★ markiert. Intern Info an Timo Burian  
-          </p>
+          <div class="modal-body">
+            <p>Weitere Informationen zu unseren Produkten und Lösungen finden Sie auf unserer Website.</p>
+            <p>
+              <a class="link" href="https://www.h-d-tec.de" target="_blank" rel="noopener">www.h-d-tec.de</a>
+            </p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-close-modal>Schließen</button>
+            <a class="btn-primary btn-link" href="https://www.h-d-tec.de" target="_blank" rel="noopener">Zur Website</a>
+          </div>
         </div>
       </div>
 
-<!-- Installationsbutton (nur sichtbar wenn als PWA installierbar) -->
-      <button id="installBtn" class="install-btn" style="display: none;">App installieren</button>
+      <div id="helpModal" class="modal-backdrop" style="display:none;">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h2>Hilfe</h2>
+            <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
+          </div>
+          <div class="modal-body">
+            <ol class="help-steps">
+              <li>Material auswählen (Sorte &amp; Typ).</li>
+              <li>Wert A und B eingeben.</li>
+              <li>Ergebnis prüfen (inkl. Toleranzstatus).</li>
+              <li>Optional: Werte bestätigen, Verlauf nutzen oder Bericht exportieren.</li>
+            </ol>
+            <p class="small">Hinweis: Die Berechnung erfolgt als B in % relativ zu A.</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-primary" data-close-modal>Verstanden</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="supportModal" class="modal-backdrop" style="display:none;">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h2>Technischer Support</h2>
+            <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
+          </div>
+          <div class="modal-body">
+            <p>Wenn ein Material ergänzt oder angepasst werden soll, senden Sie bitte alle relevanten Daten an:</p>
+            <p><strong>info@h-d-tec.de</strong></p>
+            <p>Falls vorhanden, bitte auch das zugehörige Sicherheitsdatenblatt (SDB/SDS) beifügen.</p>
+            <p>Bitte erwähnen Sie auch den Grund der E-Mail.</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="rightsModal" class="modal-backdrop" style="display:none;">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h2>Rechte &amp; Haftung</h2>
+            <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
+          </div>
+          <div class="modal-body">
+            <p>Dieses Tool dient als rechnerische Unterstützung.</p>
+            <p>Für die Richtigkeit der Eingaben und die Anwendung der Ergebnisse ist der Nutzer verantwortlich.</p>
+            <p>Eine Haftung für fehlerhafte Dosierungen ist ausgeschlossen.</p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="aboutModal" class="modal-backdrop" style="display:none;">
+        <div class="modal-dialog">
+          <div class="modal-header">
+            <h2>Über dieses Tool</h2>
+            <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Dosierung</strong> berechnet den Anteil von B in Prozent relativ zu A und prüft – je nach Material – einen zulässigen Bereich.</p>
+            <p class="small">Version: <span id="aboutVersion">–</span></p>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Toast container -->
+    <div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="./html2pdf.bundle.js"></script>
     <script src="app.js"></script>
     <script src="install.js"></script>
-    <script>
-      // Service Worker Registrierung
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("service-worker.js")
-          .catch((err) => console.error(err));
-      }
-    </script>
   </body>
 </html>

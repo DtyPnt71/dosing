@@ -3,19 +3,21 @@
   "short_name": "Dosier-Tool",
   "start_url": "./",
   "display": "fullscreen",
-  "version": "",
+  "version": "1.0.2",
   "background_color": "#ffffff",
   "theme_color": "#0f0f0f",
   "icons": [
     {
       "src": "icon-192x192.png",
       "type": "image/png",
-      "sizes": "1024x1024"
+      "sizes": "192x192"
     },
     {
       "src": "icon-512x512.png",
       "type": "image/png",
-      "sizes": "1024x1024"
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "scope": "./",
+  "maintenance": false
 }

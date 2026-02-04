@@ -1,8 +1,10 @@
-window.EXPORT_EMAIL = "timo.burian@h-d-tec.de";
 window.EXPORT_EMAIL = "info@h-d-tec.de";
+// PIN for internal PDF export (change for your deployment)
+window.EXPORT_PIN = window.EXPORT_PIN || "4711";
 
 let deferredPrompt;
 let results = [];
+let resultsMeta = []; // { ts:number, comment:string }
 
 const inputA = document.getElementById("inputA");
 const inputB = document.getElementById("inputB");
@@ -11,15 +13,43 @@ const confirmBtn = document.getElementById("confirmBtn");
 const resultList = document.getElementById("resultList");
 const meanResult = document.getElementById("meanResult");
 const installBtn = document.getElementById("installBtn");
+const sampleComment = document.getElementById("sampleComment");
+const toastHost = document.getElementById("toastHost");
 
 const themeSelect = document.getElementById("themeSelect");
-const exportBtn = document.getElementById("exportBtn");
-const clearCacheBtn = document.getElementById("clearCacheBtn");
+const exportMenuItem = document.getElementById("exportMenuItem");
+// Legacy fallback: cache reset is triggered via menu action
+const clearCacheBtn = document.getElementById("clearCacheBtn") || document.getElementById("clearCacheMenuItem");
 
 
 // === Language Handling (DE / EN) ===
 const TRANSLATIONS = {
   de: {
+    header_title: 'Dosierung',
+    header_subtitle: 'Tool',
+    step_1: 'Schritt 1',
+    step_2: 'Schritt 2',
+    step_3: 'Schritt 3',
+    section_history: 'Verlauf',
+    history_card_title: 'Verlauf (max. 5 Proben)',
+
+    // Menu
+    menu_export_title: 'Export',
+    menu_display_title: 'Darstellung',
+    menu_language_title: 'Sprache',
+    menu_data_title: 'Daten',
+    menu_info_title: 'Info',
+    menu_about: 'Über dieses Tool',
+    menu_add_material: 'Material ergänzen',
+    menu_clear_data: 'Lokale Daten zurücksetzen',
+    menu_export_item: 'PDF-Bericht exportieren',
+
+    // Export auth
+    export_auth_title: 'Interner Export',
+    export_auth_intro: 'Diese Funktion ist nur für interne Zwecke gedacht. Der PDF-Bericht wird im HDT-Layout erzeugt.',
+    export_password_label: 'PIN',
+    export_password_btn_continue: 'Weiter',
+    export_password_error: 'Falsche PIN.',
     tol_ok_title: 'Dosierung korrekt',
     tol_low_title: 'Härtermangel',
     tol_high_title: 'Härterüberschuss',
@@ -35,6 +65,7 @@ const TRANSLATIONS = {
     export_button: 'Bericht exportieren',
     status_label: 'Status:',
     tol_range_label: 'Bereich:',
+    tol_target_label: 'Zielwert:',
     pdf_machine: 'Maschinen-Nr:',
     pdf_family: 'Materialsorte:',
     pdf_spec: 'Materialtyp:',
@@ -59,6 +90,9 @@ const TRANSLATIONS = {
     placeholder_machine_no: 'z.B. 1221',
     placeholder_machine_date: 'TT.MM.JJJJ',
     placeholder_machine_creator: 'Name des Erstellers',
+    creator_select_placeholder: 'Bitte wählen',
+    creator_select_other: 'Andere …',
+    placeholder_creator_other: 'Name (benutzerdefiniert)',
     label_componentA: 'Komponente A',
     label_componentB: 'Komponente B',
     menu_design: 'Design',
@@ -76,12 +110,43 @@ const TRANSLATIONS = {
     placeholder_newMatTarget: 'z.B. 10,00',
     placeholder_newMatMin: 'z.B. 9,00',
     placeholder_newMatMax: 'z.B. 11,00',
-    
-    
-    
-    
+    // New: UX polish
+    menu_manage_materials: 'Material verwalten',
+    manage_materials_title: 'Custom-Materialien verwalten',
+    manage_materials_intro: 'Hier können lokal gespeicherte Materialien bearbeitet oder gelöscht werden.',
+    sample_comment_placeholder: 'Kommentar (optional)',
+    toast_saved: 'Gespeichert',
+    toast_deleted: 'Gelöscht',
+    toast_cleared: 'Lokale Daten wurden gelöscht.',
+    toast_exporting: 'Bericht wird erstellt …',
+    toast_export_done: 'Bericht erstellt',
   },
   en: {
+    header_title: 'Dosing',
+    header_subtitle: 'Tool',
+    step_1: 'Step 1',
+    step_2: 'Step 2',
+    step_3: 'Step 3',
+    section_history: 'History',
+    history_card_title: 'History (max. 5 samples)',
+
+    // Menu
+    menu_export_title: 'Export',
+    menu_display_title: 'Display',
+    menu_language_title: 'Language',
+    menu_data_title: 'Data',
+    menu_info_title: 'Info',
+    menu_about: 'About this tool',
+    menu_add_material: 'Add material',
+    menu_clear_data: 'Reset local data',
+    menu_export_item: 'Export PDF report',
+
+    // Export auth
+    export_auth_title: 'Internal export',
+    export_auth_intro: 'This function is intended for internal use only. The PDF report is generated in the HDT layout.',
+    export_password_label: 'PIN',
+    export_password_btn_continue: 'Continue',
+    export_password_error: 'Incorrect PIN.',
     tol_ok_title: 'Dosing correct',
     tol_low_title: 'Hardener deficiency',
     tol_high_title: 'Hardener excess',
@@ -97,6 +162,7 @@ const TRANSLATIONS = {
     export_button: 'Export report',
     status_label: 'Status:',
     tol_range_label: 'Range:',
+    tol_target_label: 'Target:',
     pdf_machine: 'Machine No.:',
     pdf_family: 'Material family:',
     pdf_spec: 'Material type:',
@@ -121,6 +187,9 @@ const TRANSLATIONS = {
     placeholder_machine_no: 'e.g. 1221',
     placeholder_machine_date: 'DD.MM.YYYY',
     placeholder_machine_creator: 'Name of creator',
+    creator_select_placeholder: 'Please select',
+    creator_select_other: 'Other …',
+    placeholder_creator_other: 'Custom name',
     label_componentA: 'Component A',
     label_componentB: 'Component B',
     menu_design: 'Design',
@@ -138,10 +207,160 @@ const TRANSLATIONS = {
     placeholder_newMatTarget: 'e.g. 10,00',
     placeholder_newMatMin: 'e.g. 9,00',
     placeholder_newMatMax: 'e.g. 11,00',
+
+    // New: UX polish
+    menu_manage_materials: 'Manage materials',
+    manage_materials_title: 'Manage custom materials',
+    manage_materials_intro: 'Edit or delete locally stored materials.',
+    sample_comment_placeholder: 'Comment (optional)',
+    toast_saved: 'Saved',
+    toast_deleted: 'Deleted',
+    toast_cleared: 'Local data cleared.',
+    toast_exporting: 'Creating report …',
+    toast_export_done: 'Report created',
   }
 };
 
 let CURRENT_LANG = (localStorage.getItem('hdt-lang') === 'en') ? 'en' : 'de';
+
+// Parse user-entered numbers in a locale-tolerant way.
+// - Accepts both "6.31" and "6,31"
+// - Ignores spaces and common thousands separators
+function parseNum(input) {
+  if (input == null) return NaN;
+  let s = String(input).trim();
+  if (!s) return NaN;
+
+  // Remove whitespace (including NBSP) and some common separators
+  s = s.replace(/[\s\u00A0]/g, '').replace(/['_]/g, '');
+
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+
+  // If both are present, treat the last occurrence as the decimal separator
+  if (hasComma && hasDot) {
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    if (lastComma > lastDot) {
+      // 1.234,56 -> 1234.56
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else {
+      // 1,234.56 -> 1234.56
+      s = s.replace(/,/g, '');
+    }
+  } else if (hasComma && !hasDot) {
+    // 6,31 -> 6.31
+    s = s.replace(',', '.');
+  } else {
+    // Only dot or no separator: Number(...) can handle it
+  }
+
+  return Number(s);
+}
+
+// Keep the latest computed live value as a number to avoid re-parsing
+// formatted UI strings like "6,31" (parseFloat would turn that into 6).
+let LAST_LIVE_VAL = null;
+
+function fmt2(val) {
+  const num = Number(val);
+  if (!Number.isFinite(num)) return '–';
+  const s = num.toFixed(2);
+  return (CURRENT_LANG === 'de') ? s.replace('.', ',') : s;
+}
+
+// === Toasts (replace alert()) ===
+let _toastSeq = 0;
+function showToast(message, opts = {}) {
+  if (!toastHost) return null;
+  const {
+    type = 'neutral',
+    timeout = 2200,
+    sticky = false,
+  } = opts;
+
+  const id = `t${Date.now()}_${_toastSeq++}`;
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.setAttribute('role', 'status');
+  el.dataset.toastId = id;
+  el.innerHTML = `<div class="toast-msg"></div><button class="toast-close" aria-label="Close">✕</button>`;
+  el.querySelector('.toast-msg').textContent = message;
+  el.querySelector('.toast-close').addEventListener('click', () => {
+    el.classList.add('closing');
+    setTimeout(() => el.remove(), 160);
+  });
+  toastHost.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('open'));
+
+  if (!sticky) {
+    setTimeout(() => {
+      if (!el.isConnected) return;
+      el.classList.add('closing');
+      setTimeout(() => el.remove(), 160);
+    }, timeout);
+  }
+  return id;
+}
+
+function updateToast(id, message, opts = {}) {
+  if (!toastHost || !id) return;
+  const el = toastHost.querySelector(`[data-toast-id="${id}"]`);
+  if (!el) return;
+  if (message != null) {
+    const msg = el.querySelector('.toast-msg');
+    if (msg) msg.textContent = message;
+  }
+  if (opts.type) {
+    el.className = `toast toast-${opts.type}`;
+  }
+  if (opts.done) {
+    setTimeout(() => {
+      if (!el.isConnected) return;
+      el.classList.add('closing');
+      setTimeout(() => el.remove(), 160);
+    }, opts.timeout ?? 1500);
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getStatusForValue(value, spec) {
+  if (!spec || value == null || !Number.isFinite(value)) return 'neutral';
+  const hasMin = Number.isFinite(spec.minPercentB);
+  const hasMax = Number.isFinite(spec.maxPercentB);
+  const hasTarget = Number.isFinite(spec.targetPercentB);
+  const eps = 1e-9;
+
+  // No range, but a target value exists
+  if (!hasMin && !hasMax) {
+    if (!hasTarget) return 'neutral';
+    if (value <= spec.targetPercentB - eps) return 'low';
+    if (value >= spec.targetPercentB + eps) return 'high';
+    return 'ok';
+  }
+
+  // Exact target (min==max)
+  if (hasMin && hasMax && Math.abs(spec.minPercentB - spec.maxPercentB) < 1e-12) {
+    const target = spec.minPercentB;
+    if (value <= target - eps) return 'low';
+    if (value >= target + eps) return 'high';
+    return 'ok';
+  }
+
+  // Real range
+  if (hasMin && value <= spec.minPercentB - eps) return 'low';
+  if (hasMax && value >= spec.maxPercentB + eps) return 'high';
+  return 'ok';
+}
+
 
 function t(key) {
   const dict = TRANSLATIONS[CURRENT_LANG] || TRANSLATIONS.de;
@@ -153,6 +372,57 @@ function applyLanguage() {
     if (document.documentElement) {
       document.documentElement.lang = CURRENT_LANG;
     }
+
+    // Header
+    const headerTitle = document.getElementById('headerTitle');
+    if (headerTitle) headerTitle.textContent = t('header_title');
+    const headerSubtitle = document.getElementById('headerSubtitle');
+    if (headerSubtitle) headerSubtitle.textContent = t('header_subtitle');
+
+    // Steps / section titles
+    const step1 = document.getElementById('step1');
+    if (step1) step1.textContent = t('step_1');
+    const step2 = document.getElementById('step2');
+    if (step2) step2.textContent = t('step_2');
+    const step3 = document.getElementById('step3');
+    if (step3) step3.textContent = t('step_3');
+    const historySectionTitle = document.getElementById('historySectionTitle');
+    if (historySectionTitle) historySectionTitle.textContent = t('section_history');
+    const historyCardTitle = document.getElementById('historyCardTitle');
+    if (historyCardTitle) historyCardTitle.textContent = t('history_card_title');
+
+    // Menu headings
+    const menuExportTitle = document.getElementById('menuExportTitle');
+    if (menuExportTitle) menuExportTitle.textContent = t('menu_export_title');
+    const menuDisplayTitle = document.getElementById('menuDisplayTitle');
+    if (menuDisplayTitle) menuDisplayTitle.textContent = t('menu_display_title');
+    const menuLanguageTitle = document.getElementById('menuLanguageTitle');
+    if (menuLanguageTitle) menuLanguageTitle.textContent = t('menu_language_title');
+    const menuDataTitle = document.getElementById('menuDataTitle');
+    if (menuDataTitle) menuDataTitle.textContent = t('menu_data_title');
+    const menuInfoTitle = document.getElementById('menuInfoTitle');
+    if (menuInfoTitle) menuInfoTitle.textContent = t('menu_info_title');
+
+    // Menu items
+    if (exportMenuItem) exportMenuItem.textContent = t('menu_export_item');
+    const addMatItem = document.getElementById('addMaterialMenuItem');
+    if (addMatItem) addMatItem.textContent = t('menu_add_material');
+    const manageMatItem = document.getElementById('manageMaterialsMenuItem');
+    if (manageMatItem) manageMatItem.textContent = t('menu_manage_materials');
+    const aboutItem = document.getElementById('aboutMenuItem');
+    if (aboutItem) aboutItem.textContent = t('menu_about');
+    const clearDataBtn = document.querySelector('.menu-item[data-action="clearCache"]');
+    if (clearDataBtn) clearDataBtn.textContent = t('menu_clear_data');
+
+    // Export auth modal
+    const expAuthTitle = document.getElementById('exportAuthTitle');
+    if (expAuthTitle) expAuthTitle.textContent = t('export_auth_title');
+    const expAuthIntro = document.getElementById('exportAuthIntro');
+    if (expAuthIntro) expAuthIntro.textContent = t('export_auth_intro');
+    const expPwLabel = document.getElementById('exportPasswordLabel');
+    if (expPwLabel) expPwLabel.textContent = t('export_password_label');
+    const expAuthConfirm = document.getElementById('exportAuthConfirm');
+    if (expAuthConfirm) expAuthConfirm.textContent = t('export_password_btn_continue');
 
     // Material selection labels
     const famLabel = document.querySelector('label[for="materialFamily"]');
@@ -173,17 +443,23 @@ function applyLanguage() {
     if (historyTitle) historyTitle.textContent = t('history_title');
 
     // Mean label
-    const meanLabel = document.querySelector('.mean-section span');
+    const meanLabel = document.getElementById('meanLabel') || document.querySelector('.mean-section span');
     if (meanLabel) meanLabel.textContent = t('mean_label');
 
-    // Export button
-    if (exportBtn) {
-      exportBtn.textContent = t('export_button');
-    }
+    // (Export is in the menu)
 
     // Current result label
-    const resultLabel = document.querySelector('.result-section .result-label');
+    const resultLabel = document.getElementById('resultCurrentLabel') || document.querySelector('.result-section .result-label');
     if (resultLabel) resultLabel.textContent = t('result_current_label');
+
+    // Optional comment field
+    if (sampleComment) sampleComment.placeholder = t('sample_comment_placeholder');
+
+    // Manage materials modal
+    const manageTitle = document.getElementById('manageMaterialsTitle');
+    if (manageTitle) manageTitle.textContent = t('manage_materials_title');
+    const manageIntro = document.getElementById('manageMaterialsIntro');
+    if (manageIntro) manageIntro.textContent = t('manage_materials_intro');
 
     // Status label
     const statusLabel = document.querySelector('.status-label');
@@ -195,21 +471,22 @@ function applyLanguage() {
       tolRange.firstChild.textContent = t('tol_range_label') + ' ';
     }
 
-    // PDF-Labels: Reihenfolge im DOM beachten
-    // .pdf-label Elemente im #pdfReport:
+    // PDF-Labels: Reihenfolge im DOM beachten (im #pdfReport)
+    // .pdf-label Elemente:
     // 0: Datum
     // 1: Maschinen-Nr
     // 2: Materialsorte
     // 3: Materialtyp
     // 4: Dosierung
-    // 5: Mittelwert
-    // 6: Erstellt durch
-    const pdfLabels = document.querySelectorAll('.pdf-label');
+    // 5: Kommentar
+    // 6: Mittelwert
+    // 7: Erstellt durch
+    const pdfLabels = document.querySelectorAll('#pdfReport .pdf-label');
     if (pdfLabels[1]) pdfLabels[1].textContent = t('pdf_machine');
     if (pdfLabels[2]) pdfLabels[2].textContent = t('pdf_family');
     if (pdfLabels[3]) pdfLabels[3].textContent = t('pdf_spec');
-    if (pdfLabels[5]) pdfLabels[5].textContent = t('pdf_mean');  
-    if (pdfLabels[6]) pdfLabels[6].textContent = t('pdf_creator');
+    if (pdfLabels[6]) pdfLabels[6].textContent = t('pdf_mean');
+    if (pdfLabels[7]) pdfLabels[7].textContent = t('pdf_creator');
 
     // Confirm button
     if (confirmBtn) {
@@ -242,7 +519,7 @@ function applyLanguage() {
       const dateLabel = machineModalEl.querySelector('label[for="machineDateInput"]');
       if (dateLabel) dateLabel.textContent = t('machine_modal_label_date');
 
-      const creatorLabel = machineModalEl.querySelector('label[for="machineCreatorInput"]');
+      const creatorLabel = machineModalEl.querySelector('label[for="machineCreatorSelect"]');
       if (creatorLabel) creatorLabel.textContent = t('machine_modal_label_creator');
 
       const machineInputEl = document.getElementById('machineInput');
@@ -251,8 +528,22 @@ function applyLanguage() {
       const machineDateInputEl = document.getElementById('machineDateInput');
       if (machineDateInputEl) machineDateInputEl.setAttribute('placeholder', t('placeholder_machine_date'));
 
-      const machineCreatorInputEl = document.getElementById('machineCreatorInput');
-      if (machineCreatorInputEl) machineCreatorInputEl.setAttribute('placeholder', t('placeholder_machine_creator'));
+      const machineCreatorSelectEl = document.getElementById('machineCreatorSelect');
+      const machineCreatorOtherEl = document.getElementById('machineCreatorOtherInput');
+
+      // Translate select placeholder & "Other" option (options may be present before async load)
+      if (machineCreatorSelectEl) {
+        const opts = machineCreatorSelectEl.querySelectorAll('option');
+        if (opts && opts.length) {
+          // first option is placeholder
+          if (opts[0]) opts[0].textContent = t('creator_select_placeholder');
+          // last option is "other"
+          const last = opts[opts.length - 1];
+          if (last) last.textContent = t('creator_select_other');
+        }
+      }
+
+      if (machineCreatorOtherEl) machineCreatorOtherEl.setAttribute('placeholder', t('placeholder_creator_other'));
 
       const machineCancelBtn = document.getElementById('machineCancel');
       const machineConfirmBtn = document.getElementById('machineConfirm');
@@ -329,10 +620,13 @@ function applyLanguage() {
       if (designLabelEl) designLabelEl.textContent = '🎨 ' + t('menu_design');
 
       const cacheBtn = menuPanel.querySelector('button[data-action="clearCache"]');
-      if (cacheBtn) cacheBtn.textContent = '♻️ ' + t('menu_cache');
+      if (cacheBtn) cacheBtn.textContent = '♻️ ' + t('menu_clear_data');
 
       const addMatBtn = menuPanel.querySelector('button[data-action="addMaterial"]');
       if (addMatBtn) addMatBtn.textContent = '💾 ' + t('menu_add_material');
+
+      const manageMatBtn = menuPanel.querySelector('button[data-action="manageMaterials"]');
+      if (manageMatBtn) manageMatBtn.textContent = '🗂️ ' + t('menu_manage_materials');
     }
   } catch (e) {
     console.error('Fehler beim Anwenden der Sprache:', e);
@@ -342,6 +636,15 @@ function toggleLanguage() {
   CURRENT_LANG = CURRENT_LANG === 'de' ? 'en' : 'de';
   localStorage.setItem('hdt-lang', CURRENT_LANG);
   applyLanguage();
+
+// Theme fixed to default (themes removed)
+(function initThemeFixed(){
+  if (document.body) {
+    document.body.classList.remove('theme-default','theme-ocean','theme-sunset');
+    document.body.classList.add('theme-default');
+  }
+  try { localStorage.removeItem('hdt-theme'); } catch(e) {}
+})();
   // Toleranzbox neu rendern, damit Status/Meldungen in neuer Sprache erscheinen
   try {
     if (typeof renderTolerance === 'function') {
@@ -354,69 +657,138 @@ function toggleLanguage() {
 // direkt initial anwenden
 applyLanguage();
 
-// === Theme Handling ===
-function updateThemeMenuItems(currentTheme) {
-  try {
-    const items = document.querySelectorAll('.menu-item[data-theme]');
-    items.forEach((btn) => {
-      const tVal = btn.getAttribute('data-theme') || '';
-      if (tVal === currentTheme) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-  } catch (e) {
-    // ignore
-  }
-}
-
-function applyTheme(val) {
-  const theme = val || 'default';
-  if (document.body) {
-    document.body.classList.remove('theme-default', 'theme-ocean', 'theme-sunset');
-    document.body.classList.add('theme-' + theme);
-  }
-  try {
-    localStorage.setItem('hdt-theme', theme);
-  } catch (e) {
-    // ignore
-  }
-  if (themeSelect) {
-    themeSelect.value = theme;
-  }
-  updateThemeMenuItems(theme);
-}
-
-(function initTheme() {
-  let saved = 'default';
-  try {
-    saved = localStorage.getItem('hdt-theme') || 'default';
-  } catch (e) {
-    saved = 'default';
-  }
-  applyTheme(saved);
-
-  if (themeSelect) {
-    themeSelect.addEventListener('change', () => {
-      const val = themeSelect.value || 'default';
-      applyTheme(val);
-    });
-  }
-})();
 // === Export Handling ===
 function updateExportButtonState() {
-  if (!exportBtn) return;
-  exportBtn.disabled = results.length === 0;
+  if (!exportMenuItem) return;
+  exportMenuItem.disabled = results.length === 0;
 }
 
 // Elemente für Bericht-Modal
 const machineModal = document.getElementById("machineModal");
 const machineInput = document.getElementById("machineInput");
 const machineDateInput = document.getElementById("machineDateInput");
-const machineCreatorInput = document.getElementById("machineCreatorInput");
+const machineCreatorSelect = document.getElementById("machineCreatorSelect");
+const machineCreatorOtherInput = document.getElementById("machineCreatorOtherInput");
+const machineCommentInput = document.getElementById("machineCommentInput");
 const machineCancel = document.getElementById("machineCancel");
 const machineConfirm = document.getElementById("machineConfirm");
+
+// === Creator name list (dropdown) ===
+// Loaded from external file so names can be maintained without touching JS.
+const CREATOR_NAMES_URL = './creator-names.json';
+
+function setCreatorOtherVisible(visible) {
+  if (!machineCreatorOtherInput) return;
+  machineCreatorOtherInput.style.display = visible ? '' : 'none';
+  if (!visible) machineCreatorOtherInput.value = '';
+}
+
+function getCreatorNameForExport() {
+  if (!machineCreatorSelect) return '';
+  const val = String(machineCreatorSelect.value || '');
+  if (val === '__other__') {
+    return (machineCreatorOtherInput?.value || '').trim();
+  }
+  return val.trim();
+}
+
+async function loadCreatorNames() {
+  if (!machineCreatorSelect) return;
+  try {
+    const res = await fetch(CREATOR_NAMES_URL, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('Failed to load creator names');
+    const data = await res.json();
+    const names = Array.isArray(data?.names) ? data.names : (Array.isArray(data) ? data : []);
+
+    // Preserve first placeholder option and last "other" option
+    const placeholderOpt = machineCreatorSelect.querySelector('option[value=""]') || machineCreatorSelect.options[0];
+    const otherOpt = machineCreatorSelect.querySelector('option[value="__other__"]') || null;
+
+    // Clear and rebuild
+    machineCreatorSelect.innerHTML = '';
+    if (placeholderOpt) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.disabled = true;
+      opt.selected = true;
+      opt.textContent = t('creator_select_placeholder');
+      machineCreatorSelect.appendChild(opt);
+    }
+
+    names
+      .filter(n => typeof n === 'string' && n.trim().length)
+      .forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name.trim();
+        opt.textContent = name.trim();
+        machineCreatorSelect.appendChild(opt);
+      });
+
+    const other = document.createElement('option');
+    other.value = '__other__';
+    other.textContent = t('creator_select_other');
+    machineCreatorSelect.appendChild(other);
+  } catch (e) {
+    // Fallback: keep existing static options
+    console.warn('Could not load creator names; using fallback options.', e);
+  }
+}
+
+if (machineCreatorSelect) {
+  machineCreatorSelect.addEventListener('change', () => {
+    const isOther = String(machineCreatorSelect.value) === '__other__';
+    setCreatorOtherVisible(isOther);
+    if (isOther) {
+      setTimeout(() => machineCreatorOtherInput?.focus(), 0);
+    }
+  });
+}
+
+// Fire once on load
+loadCreatorNames();
+
+// Export auth modal (internal function)
+const exportAuthModal = document.getElementById('exportAuthModal');
+const exportPasswordInput = document.getElementById('exportPasswordInput');
+const exportAuthCancel = document.getElementById('exportAuthCancel');
+const exportAuthConfirm = document.getElementById('exportAuthConfirm');
+const exportAuthError = document.getElementById('exportAuthError');
+
+let exportUnlocked = false;
+
+function closeExportAuthModal() {
+  if (exportAuthModal) exportAuthModal.style.display = 'none';
+  if (exportPasswordInput) exportPasswordInput.value = '';
+  if (exportAuthError) exportAuthError.style.display = 'none';
+  try { document.activeElement && document.activeElement.blur(); } catch(e) {}
+}
+
+function openExportAuthModal() {
+  if (!exportAuthModal) {
+    // If the modal is missing, fall back to export (not expected)
+    openMachineModal();
+    return;
+  }
+  exportAuthModal.style.display = 'flex';
+  if (exportAuthError) exportAuthError.style.display = 'none';
+  setTimeout(() => {
+    if (exportPasswordInput) exportPasswordInput.focus();
+  }, 10);
+}
+
+function tryUnlockExport() {
+  const entered = (exportPasswordInput?.value || '').trim();
+  if (entered && entered === String(window.EXPORT_PIN || '')) {
+    exportUnlocked = true;
+    closeExportAuthModal();
+    openMachineModal();
+    return;
+  }
+  if (exportAuthError) {
+    exportAuthError.textContent = t('export_password_error');
+    exportAuthError.style.display = 'block';
+  }
+}
 
 // Hilfsfunktionen für Modal
 function formatToday() {
@@ -430,7 +802,7 @@ function formatToday() {
 function openMachineModal() {
   if (!machineModal) {
     // Falls kein Modal vorhanden, direkt exportieren
-    performExport("", formatToday(), "");
+    performExport("", formatToday(), "", "");
     return;
   }
   machineModal.style.display = "flex";
@@ -441,8 +813,13 @@ function openMachineModal() {
   if (machineDateInput) {
     machineDateInput.value = formatToday();
   }
-  if (machineCreatorInput) {
-    machineCreatorInput.value = "";
+  if (machineCreatorSelect) {
+    // reset selection
+    machineCreatorSelect.value = '';
+  }
+  setCreatorOtherVisible(false);
+  if (machineCommentInput) {
+    machineCommentInput.value = "";
   }
 
   setTimeout(() => {
@@ -454,6 +831,7 @@ function closeMachineModal() {
   if (machineModal) {
     machineModal.style.display = "none";
   }
+  try { document.activeElement && document.activeElement.blur(); } catch(e) {}
 }
 
 // Hilfsfunktion: Bericht wie Vorlage aufbauen
@@ -475,7 +853,7 @@ function buildReport(machineNo, reportDate, famText, specText, tolText, meanText
 
   results.forEach((val, idx) => {
     const probe = String(idx + 1).padEnd(5, " "); // z.B. "1    ", "2    "
-    const wert = val.toFixed(2).replace(".", ",");
+    const wert = fmt2(val);
     // Keine Tabs am Zeilenanfang, nur einfache Spaltenstruktur mit Leerzeichen
     lines.push(probe + "   " + wert);
   });
@@ -499,7 +877,7 @@ function isIOS() {
   }
 }
 
-function generatePdfReport(machineNo, reportDate, famText, specText, tolText, meanText, creatorName) {
+function generatePdfReport(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment) {
   const root = document.getElementById("pdfReport");
   if (!root || typeof window.html2pdf === "undefined") {
     return;
@@ -520,6 +898,7 @@ function generatePdfReport(machineNo, reportDate, famText, specText, tolText, me
   setText("pdfDose", tolText || "");
   setText("pdfMean", meanText || "");
   setText("pdfCreator", creatorName || "");
+  setText("pdfComment", (exportComment || "").trim());
 
   // Probentabelle
   const tbody = document.getElementById("pdfProbes");
@@ -531,7 +910,7 @@ function generatePdfReport(machineNo, reportDate, famText, specText, tolText, me
         const tdProbe = document.createElement("td");
         const tdVal = document.createElement("td");
         tdProbe.textContent = String(idx + 1);
-        tdVal.textContent = Number(val).toFixed(2).replace(".", ",");
+        tdVal.textContent = fmt2(val);
         tr.appendChild(tdProbe);
         tr.appendChild(tdVal);
         tbody.appendChild(tr);
@@ -623,7 +1002,7 @@ function generatePdfReport(machineNo, reportDate, famText, specText, tolText, me
 
 
 // Export-Logik in eigene Funktion ausgelagert
-function performExport(machineNo, reportDate, creatorName) {
+function performExport(machineNo, reportDate, creatorName, exportComment) {
   // Materialsorte & -typ
   const famEl = materialFamily;
   const specEl = materialSpec;
@@ -652,6 +1031,7 @@ function performExport(machineNo, reportDate, creatorName) {
   const meanText = meanResult ? meanResult.textContent.trim() : "";
 
   // 1) PDF erzeugen (liefert Promise, wenn html2pdf das unterstützt)
+  const toastId = showToast(t('toast_exporting'), { type: 'neutral', sticky: true });
   let pdfPromise;
   try {
     pdfPromise = generatePdfReport(
@@ -661,7 +1041,8 @@ function performExport(machineNo, reportDate, creatorName) {
       specText,
       tolText,
       meanText,
-      creatorName
+      creatorName,
+      exportComment
     );
   } catch (e) {
     console.error("PDF-Export fehlgeschlagen:", e);
@@ -698,25 +1079,47 @@ function performExport(machineNo, reportDate, creatorName) {
   if (pdfPromise && typeof pdfPromise.then === "function") {
     pdfPromise
       .then(() => {
+        updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
         // PDF-Finish → jetzt Mail-App öffnen
         sendMail();
       })
       .catch((e) => {
         console.error("PDF-Export fehlgeschlagen (Promise):", e);
+        updateToast(toastId, 'PDF-Export fehlgeschlagen', { type: 'danger', done: true });
         // zur Sicherheit trotzdem Mail öffnen
         sendMail();
       });
   } else {
+    updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
     // Fallback: wenn kein Promise zurückkommt, verhalten wie bisher
     sendMail();
   }
 }
 
 
-if (exportBtn) {
-  exportBtn.addEventListener("click", () => {
-    if (!results.length) return;
-    openMachineModal();
+// Export auth modal events
+if (exportAuthCancel) {
+  exportAuthCancel.addEventListener('click', () => closeExportAuthModal());
+}
+
+if (exportAuthConfirm) {
+  exportAuthConfirm.addEventListener('click', () => tryUnlockExport());
+}
+
+if (exportPasswordInput) {
+  exportPasswordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      tryUnlockExport();
+    }
+  });
+}
+
+if (exportAuthModal) {
+  exportAuthModal.addEventListener('click', (e) => {
+    if (e.target === exportAuthModal) {
+      closeExportAuthModal();
+    }
   });
 }
 
@@ -731,9 +1134,10 @@ if (machineConfirm) {
   machineConfirm.addEventListener("click", () => {
     const machineNo = machineInput ? machineInput.value.trim() : "";
     const reportDate = machineDateInput ? machineDateInput.value.trim() : formatToday();
-    const creatorName = machineCreatorInput ? machineCreatorInput.value.trim() : "";
+    const creatorName = getCreatorNameForExport();
+    const exportComment = machineCommentInput ? String(machineCommentInput.value || "").trim() : "";
     closeMachineModal();
-    performExport(machineNo, reportDate, creatorName);
+    performExport(machineNo, reportDate, creatorName, exportComment);
   });
 }
 
@@ -763,23 +1167,19 @@ function clearAppState() {
   }
 
   // Rest wie gehabt:
-  applyTheme('default');
 
   // Ergebnisse und Anzeige zurücksetzen
   results = [];
+  resultsMeta = [];
+  if (sampleComment) sampleComment.value = '';
   if (typeof updateList === "function") updateList();
   if (typeof updateMean === "function") updateMean();
   if (tolBox) {
     tolBox.style.display = "none";
   }
 
-  // Seite/PWA neu laden, damit alles komplett neu initialisiert wird
-  if (typeof window !== 'undefined' && window.location) {
-    // kleiner Timeout, damit UI-Änderungen vorher noch gezeichnet werden können
-    setTimeout(() => {
-      window.location.reload();
-    }, 150);
-  }
+  updateStepper();
+  showToast(t('toast_cleared'), { type: 'neutral' });
 }
 
 if (clearCacheBtn) {
@@ -787,17 +1187,49 @@ if (clearCacheBtn) {
 }
 
 function calcLive() {
-  const a = parseFloat(inputA.value);
-  const b = parseFloat(inputB.value);
-  if (a > 0 && !isNaN(b)) {
+  const a = parseNum(inputA.value);
+  const b = parseNum(inputB.value);
+  if (Number.isFinite(a) && Number.isFinite(b) && a > 0 && b >= 0) {
     // Verhältnis A zu B berechnen
     const val = (100 * b) / a;
-    liveResult.textContent = val.toFixed(2);
+    LAST_LIVE_VAL = val;
+    liveResult.textContent = fmt2(val);
+    // Ergebnis optisch hervorheben (abhängig von Materialbereich, falls vorhanden)
+    try {
+      const spec = getSelectedSpec ? getSelectedSpec() : null;
+      const status = getStatusForValue(val, spec);
+      if (liveResult) {
+        liveResult.dataset.status = status;
+      }
+    } catch (e) {}
     confirmBtn.disabled = false;
   } else {
+    LAST_LIVE_VAL = null;
     liveResult.textContent = "–";
+    if (liveResult) liveResult.dataset.status = 'neutral';
     confirmBtn.disabled = true;
   }
+  updateStepper();
+}
+
+function updateStepper() {
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const famOk = !!(materialFamily && materialFamily.value);
+  const specOk = !!(materialSpec && materialSpec.value);
+  const hasLive = Number.isFinite(LAST_LIVE_VAL);
+
+  let active = 1;
+  if (famOk && specOk) active = 2;
+  if (hasLive) active = 3;
+
+  [step1, step2, step3].forEach((el, idx) => {
+    if (!el) return;
+    const n = idx + 1;
+    el.classList.toggle('is-active', n === active);
+    el.classList.toggle('is-done', n < active);
+  });
 }
 
 [inputA, inputB].forEach((el) =>
@@ -807,36 +1239,80 @@ function calcLive() {
 );
 
 confirmBtn.addEventListener("click", () => {
-  const val = parseFloat(liveResult.textContent);
+  const val = LAST_LIVE_VAL;
+  if (!Number.isFinite(val)) return;
+
+  // UX: kurzer Loading-/Check-State (Speichern passiert sofort)
+  confirmBtn.disabled = true;
+  confirmBtn.classList.add('is-loading');
+
+  const comment = (sampleComment ? (sampleComment.value || '').trim() : '');
+
   // Neu: Ergebnisse in zeitlicher Reihenfolge (älteste Probe = Ergebnis 1)
   results.push(val);
-  if (results.length > 5) results.shift();
+  resultsMeta.push({ ts: Date.now(), comment });
+  if (results.length > 5) {
+    results.shift();
+    resultsMeta.shift();
+  }
+
+  if (sampleComment) sampleComment.value = '';
   inputA.value = "";
   inputB.value = "";
+  LAST_LIVE_VAL = null;
+
   calcLive();
   updateList();
   updateMean();
+
+  // Erfolg anzeigen
+  confirmBtn.classList.remove('is-loading');
+  confirmBtn.classList.add('is-done');
+  setTimeout(() => confirmBtn.classList.remove('is-done'), 700);
+  showToast(t('toast_saved'), { type: 'ok' });
 });
 
 function updateList() {
   resultList.innerHTML = "";
   results.forEach((r, i) => {
-    const li = document.createElement("li");
+    const meta = resultsMeta[i] || {};
+    const ts = typeof meta.ts === 'number' ? new Date(meta.ts) : null;
+    const timeStr = ts ? ts.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+    const comment = (meta.comment || '').trim();
+
+    const li = document.createElement('li');
+    li.className = (i === results.length - 1) ? 'is-latest' : '';
     li.innerHTML = `
-      <span class="result-label">Probe ${i + 1}</span>
-      <span class="value-chip">${r.toFixed(2)}</span>
-      <button class="delete-btn" onclick="deleteResult(${i})">❌</button>
+      <div class="history-main">
+        <div class="history-title">
+          <span class="result-label">Probe ${i + 1}</span>
+          ${timeStr ? `<span class="history-meta">${timeStr}</span>` : ''}
+        </div>
+        ${comment ? `<div class="history-comment">${escapeHtml(comment)}</div>` : ''}
+      </div>
+      <span class="value-chip">${fmt2(r)}</span>
+      <button class="delete-btn" type="button" data-index="${i}" aria-label="Probe löschen">✕</button>
     `;
     resultList.appendChild(li);
+  });
+
+  // Button delegation
+  resultList.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.getAttribute('data-index'));
+      if (Number.isFinite(idx)) deleteResult(idx);
+    });
   });
   updateExportButtonState();
 }
 
 function deleteResult(index) {
   results.splice(index, 1);
+  resultsMeta.splice(index, 1);
   updateList();
   updateMean();
   updateExportButtonState();
+  showToast(t('toast_deleted'), { type: 'neutral' });
 }
 
 function updateMean() {
@@ -845,7 +1321,7 @@ function updateMean() {
     return;
   }
   const sum = results.reduce((a, b) => a + b, 0);
-  meanResult.textContent = (sum / results.length).toFixed(2);
+  meanResult.textContent = fmt2(sum / results.length);
 }
 
 // INSTALL LOGIK
@@ -871,7 +1347,7 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js");
+  navigator.serviceWorker.register("./service-worker.js");
 }
 
 
@@ -932,6 +1408,23 @@ function saveCustomMaterials(custom) {
   }
 }
 
+function syncCustomMaterialsIntoMaterials() {
+  try {
+    ['PU','PS','SI'].forEach((fam) => {
+      if (!MATERIALS[fam]) MATERIALS[fam] = [];
+      // remove previous custom entries
+      MATERIALS[fam] = MATERIALS[fam].filter((m) => !m || !m.isCustom);
+      const customList = (CUSTOM_MATERIALS && Array.isArray(CUSTOM_MATERIALS[fam])) ? CUSTOM_MATERIALS[fam] : [];
+      if (customList.length) {
+        const withFlag = customList.map((m) => Object.assign({}, m, { isCustom: true }));
+        MATERIALS[fam] = MATERIALS[fam].concat(withFlag);
+      }
+    });
+  } catch (e) {
+    console.error('Fehler beim Sync der Custom-Materialien:', e);
+  }
+}
+
 let CUSTOM_MATERIALS = loadCustomMaterials();
 
 // Elemente für das Material-Hinzufügen-Modal
@@ -945,8 +1438,19 @@ const newMatMax = document.getElementById('newMatMax');
 const newMatCancel = document.getElementById('newMatCancel');
 const newMatConfirm = document.getElementById('newMatConfirm');
 
-function openMaterialModal() {
+// Manage/edit state
+let EDITING_CUSTOM = null; // { fam, id }
+
+const manageMaterialsModal = document.getElementById('manageMaterialsModal');
+const manageMaterialsList = document.getElementById('manageMaterialsList');
+
+function openMaterialModal(editCtx = null) {
   if (!materialModal) return;
+  EDITING_CUSTOM = editCtx;
+  const titleEl = document.getElementById('materialModalTitle');
+  const introEl = document.getElementById('materialModalIntro');
+  if (titleEl) titleEl.textContent = editCtx ? (CURRENT_LANG === 'de' ? 'Material bearbeiten' : 'Edit material') : t('material_modal_title');
+  if (introEl) introEl.textContent = editCtx ? (CURRENT_LANG === 'de' ? 'Bitte Änderungen speichern:' : 'Please save your changes:') : t('material_modal_intro');
   materialModal.style.display = 'flex';
   if (newMatId) newMatId.value = '';
   if (newMatName) newMatName.value = '';
@@ -956,7 +1460,21 @@ function openMaterialModal() {
   if (newMatFamily && materialFamily) {
     newMatFamily.value = materialFamily.value || 'PU';
   }
-  if (newMatId) newMatId.focus();
+  // Prefill when editing
+  if (editCtx && CUSTOM_MATERIALS && CUSTOM_MATERIALS[editCtx.fam]) {
+    const existing = CUSTOM_MATERIALS[editCtx.fam].find((m) => m.id === editCtx.id);
+    if (existing) {
+      if (newMatFamily) newMatFamily.value = editCtx.fam;
+      if (newMatId) newMatId.value = existing.id || '';
+      if (newMatName) newMatName.value = existing.name || '';
+      if (newMatTarget) newMatTarget.value = (existing.targetPercentB == null ? '' : String(existing.targetPercentB).replace('.', (CURRENT_LANG === 'de' ? ',' : '.')));
+      if (newMatMin) newMatMin.value = (existing.minPercentB == null ? '' : String(existing.minPercentB).replace('.', (CURRENT_LANG === 'de' ? ',' : '.')));
+      if (newMatMax) newMatMax.value = (existing.maxPercentB == null ? '' : String(existing.maxPercentB).replace('.', (CURRENT_LANG === 'de' ? ',' : '.')));
+      if (newMatId) newMatId.focus();
+    }
+  } else {
+    if (newMatId) newMatId.focus();
+  }
 }
 
 function closeMaterialModal() {
@@ -978,7 +1496,7 @@ if (newMatConfirm) {
     const name = (newMatName.value || '').trim();
 
     if (!fam || !id || !name) {
-      alert('Bitte Materialsorte, ID und Bezeichnung ausfüllen.');
+      showToast(CURRENT_LANG === 'de' ? 'Bitte Materialsorte, ID und Bezeichnung ausfüllen.' : 'Please fill material family, ID and name.', { type: 'danger' });
       return;
     }
 
@@ -1001,16 +1519,41 @@ if (newMatConfirm) {
       isCustom: true
     };
 
-    if (!CUSTOM_MATERIALS[fam]) {
-      CUSTOM_MATERIALS[fam] = [];
+    if (!CUSTOM_MATERIALS[fam]) CUSTOM_MATERIALS[fam] = [];
+
+    // Edit mode: update existing entry (supports moving between families)
+    if (EDITING_CUSTOM) {
+      const fromFam = EDITING_CUSTOM.fam;
+      const fromId = EDITING_CUSTOM.id;
+      const fromList = Array.isArray(CUSTOM_MATERIALS[fromFam]) ? CUSTOM_MATERIALS[fromFam] : [];
+      const targetList = CUSTOM_MATERIALS[fam];
+
+      // prevent ID collisions
+      const collision = targetList.some((m) => m.id === id) && !(fromFam === fam && fromId === id);
+      if (collision) {
+        showToast(CURRENT_LANG === 'de' ? 'Diese Material-ID existiert bereits.' : 'This material ID already exists.', { type: 'danger' });
+        return;
+      }
+
+      // remove old
+      const oldIdx = fromList.findIndex((m) => m.id === fromId);
+      if (oldIdx >= 0) fromList.splice(oldIdx, 1);
+      // add updated
+      targetList.push(newMat);
+      EDITING_CUSTOM = null;
+    } else {
+      // Create
+      const exists = CUSTOM_MATERIALS[fam].some((m) => m.id === id);
+      if (exists) {
+        showToast(CURRENT_LANG === 'de' ? 'Diese Material-ID existiert bereits.' : 'This material ID already exists.', { type: 'danger' });
+        return;
+      }
+      CUSTOM_MATERIALS[fam].push(newMat);
     }
-    CUSTOM_MATERIALS[fam].push(newMat);
     saveCustomMaterials(CUSTOM_MATERIALS);
 
-    if (!MATERIALS[fam]) {
-      MATERIALS[fam] = [];
-    }
-    MATERIALS[fam].push(newMat);
+    // Sync into runtime material list
+    syncCustomMaterialsIntoMaterials();
 
     if (materialFamily) {
       materialFamily.value = fam;
@@ -1026,9 +1569,90 @@ if (newMatConfirm) {
     }
 
     closeMaterialModal();
-
-    alert('Material gespeichert. need to be added in materials.json @ dosing.git');
+    showToast(t('toast_saved'), { type: 'ok' });
+    // refresh manage list if open
+    if (manageMaterialsModal && manageMaterialsModal.style.display === 'flex') {
+      renderManageMaterialsList();
+    }
   });
+}
+
+function openManageMaterialsModal() {
+  if (!manageMaterialsModal) return;
+  manageMaterialsModal.style.display = 'flex';
+  renderManageMaterialsList();
+}
+
+function renderManageMaterialsList() {
+  if (!manageMaterialsList) return;
+  const famOrder = ['PU', 'PS', 'SI'];
+  const items = [];
+  famOrder.forEach((fam) => {
+    const list = (CUSTOM_MATERIALS && Array.isArray(CUSTOM_MATERIALS[fam])) ? CUSTOM_MATERIALS[fam] : [];
+    list.forEach((m) => items.push({ fam, ...m }));
+  });
+
+  if (!items.length) {
+    manageMaterialsList.innerHTML = `<div class="empty-state">${CURRENT_LANG === 'de' ? 'Keine Custom-Materialien gespeichert.' : 'No custom materials saved.'}</div>`;
+    return;
+  }
+
+  manageMaterialsList.innerHTML = items.map((m) => {
+    const range = [m.minPercentB, m.maxPercentB]
+      .filter((v) => v != null && Number.isFinite(Number(v)))
+      .map((v) => fmt2(v))
+      .join(' – ');
+    const target = (m.targetPercentB == null || !Number.isFinite(Number(m.targetPercentB))) ? '' : fmt2(m.targetPercentB);
+    const details = range ? `${range} %` : (target ? `${target} %` : '–');
+    return `
+      <div class="mm-item" data-fam="${escapeHtml(m.fam)}" data-id="${escapeHtml(m.id)}">
+        <div class="mm-main">
+          <div class="mm-title"><span class="mm-fam">${escapeHtml(m.fam)}</span> <span class="mm-name">${escapeHtml(m.name || m.id)}</span></div>
+          <div class="mm-meta">ID: ${escapeHtml(m.id)} · ${escapeHtml(details)}</div>
+        </div>
+        <div class="mm-actions">
+          <button type="button" class="mm-btn" data-action="edit">${CURRENT_LANG === 'de' ? 'Bearbeiten' : 'Edit'}</button>
+          <button type="button" class="mm-btn danger" data-action="delete">${CURRENT_LANG === 'de' ? 'Löschen' : 'Delete'}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  manageMaterialsList.querySelectorAll('.mm-item').forEach((row) => {
+    row.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const fam = row.getAttribute('data-fam');
+      const id = row.getAttribute('data-id');
+      if (!fam || !id) return;
+      if (action === 'edit') {
+        openMaterialModal({ fam, id });
+      } else if (action === 'delete') {
+        deleteCustomMaterial(fam, id);
+      }
+    });
+  });
+}
+
+function deleteCustomMaterial(fam, id) {
+  if (!fam || !id) return;
+  const list = (CUSTOM_MATERIALS && Array.isArray(CUSTOM_MATERIALS[fam])) ? CUSTOM_MATERIALS[fam] : [];
+  const idx = list.findIndex((m) => m.id === id);
+  if (idx < 0) return;
+  list.splice(idx, 1);
+  saveCustomMaterials(CUSTOM_MATERIALS);
+  syncCustomMaterialsIntoMaterials();
+  if (materialFamily && materialFamily.value === fam) {
+    populateSpecs();
+    // if selected spec was deleted, reset selection
+    if (materialSpec && materialSpec.value === id) {
+      materialSpec.value = '';
+    }
+    renderTolerance();
+  }
+  renderManageMaterialsList();
+  showToast(t('toast_deleted'), { type: 'neutral' });
 }
 
 
@@ -1100,9 +1724,9 @@ function renderTolerance() {
     if (hasTarget) {
       const target = spec.targetPercentB;
       if (tolRange) {
-        const tv = target.toFixed(2).replace('.', ',');
+        const tv = fmt2(target);
         tolRange.style.display = '';
-        tolRange.innerHTML = 'Zielwert: ' + tv + ' %';
+        tolRange.innerHTML = t('tol_target_label') + ' ' + tv + ' %';
       }
       const eps = 1e-9;
       if (mean <= target - eps) {
@@ -1132,9 +1756,9 @@ function renderTolerance() {
     const target = spec.minPercentB;
     // Show the line with "Zielwert" and the target value
     if (tolRange) {
-      const tv = target.toFixed(2).replace('.', ',');
+      const tv = fmt2(target);
       tolRange.style.display = '';
-      tolRange.innerHTML = 'Zielwert: ' + tv + ' %';
+      tolRange.innerHTML = t('tol_target_label') + ' ' + tv + ' %';
     }
     const eps = 1e-9;
     if (mean <= target - eps) {
@@ -1158,8 +1782,8 @@ function renderTolerance() {
     tolRange.style.display = '';
     const min = spec.minPercentB;
     const max = spec.maxPercentB;
-    const minStr = min.toFixed(2).replace('.', ',');
-    const maxStr = max.toFixed(2).replace('.', ',');
+    const minStr = fmt2(min);
+    const maxStr = fmt2(max);
     // Update the range line content
     tolRange.innerHTML = t('target_by_weight') + ' ' + minStr + '% – ' + maxStr + ' %';
   }
@@ -1183,9 +1807,10 @@ function renderTolerance() {
 
 // Event wiring
 if (materialFamily && materialSpec) {
-  materialFamily.addEventListener('change', () => { populateSpecs(); renderTolerance(); });
-  materialSpec.addEventListener('change', () => { renderTolerance(); });
+  materialFamily.addEventListener('change', () => { populateSpecs(); renderTolerance(); updateStepper(); });
+  materialSpec.addEventListener('change', () => { renderTolerance(); updateStepper(); });
   populateSpecs();
+  updateStepper();
 }
 
 // Observe meanResult chip to auto-update tolerance
@@ -1203,7 +1828,7 @@ if (typeof inputB !== 'undefined') inputB.addEventListener('input', () => setTim
 // Load materials from external JSON file on startup.
 async function loadMaterials() {
   try {
-    const res = await fetch('materials.json', { cache: 'no-store' });
+    const res = await fetch('materials.json');
     if (!res.ok) throw new Error('Failed to load materials.json');
     MATERIALS = await res.json();
     // Benutzerdefinierte Materialien aus localStorage anhängen
@@ -1263,16 +1888,18 @@ loadMaterials();
 
 function handleMenuAction(action, btn) {
   switch (action) {
+    case 'export':
+      if (!results.length) break;
+      if (exportUnlocked) {
+        openMachineModal();
+      } else {
+        openExportAuthModal();
+      }
+      break;
     case 'lang':
       toggleLanguage();
       break;
-    case 'setTheme':
-      if (btn) {
-        const theme = btn.getAttribute('data-theme') || 'default';
-        applyTheme(theme);
-      }
-      break;
-    case 'clearCache':
+case 'clearCache':
       if (typeof clearAppState === 'function') {
         clearAppState();
       }
@@ -1280,6 +1907,15 @@ function handleMenuAction(action, btn) {
     case 'addMaterial':
       if (typeof openMaterialModal === 'function') {
         openMaterialModal();
+      }
+      break;
+    case 'manageMaterials':
+      openManageMaterialsModal();
+      break;
+    case 'openAbout':
+      {
+        const aboutModal = document.getElementById('aboutModal');
+        if (aboutModal) aboutModal.style.display = 'flex';
       }
       break;
     default:
@@ -1301,12 +1937,12 @@ document.querySelectorAll('.select').forEach((wrapper) => {
 // --- App Version automatisch laden ---
 async function loadAppVersion() {
   try {
-    const res = await fetch('manifest.json', { cache: 'no-store' });
+    const res = await fetch('manifest.json');
     const manifest = await res.json();
-    const version = manifest.version || "FAIL! -> check manifest file!";
-    const footer = document.getElementById("appFooter");
-    if (footer) {
-      footer.textContent = "Version: " + version;
+    const version = manifest.version || "–";
+    const about = document.getElementById("aboutVersion");
+    if (about) {
+      about.textContent = version;
     }
   } catch (e) {
     console.error("Version konnte nicht geladen werden:", e);
@@ -1316,3 +1952,54 @@ async function loadAppVersion() {
 document.addEventListener("DOMContentLoaded", loadAppVersion);
 // --- Ende Versionscode ---
 
+
+
+// === Generic Modal Handling (Footer + About) ===
+(function initGenericModals() {
+  function openModalById(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'flex';
+    // focus first close button if available
+    const closeBtn = el.querySelector('[data-close-modal]');
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeModal(el) {
+    if (!el) return;
+    el.style.display = 'none';
+  }
+
+  // Open via data-open-modal
+  document.addEventListener('click', (e) => {
+    const openBtn = e.target.closest('[data-open-modal]');
+    if (openBtn) {
+      e.preventDefault();
+      const id = openBtn.getAttribute('data-open-modal');
+      if (id) openModalById(id);
+      return;
+    }
+
+    // Close via data-close-modal
+    const closeBtn = e.target.closest('[data-close-modal]');
+    if (closeBtn) {
+      e.preventDefault();
+      const backdrop = closeBtn.closest('.modal-backdrop');
+      closeModal(backdrop);
+      return;
+    }
+
+    // Click on backdrop closes modal
+    const backdrop = e.target.classList && e.target.classList.contains('modal-backdrop') ? e.target : null;
+    if (backdrop) closeModal(backdrop);
+  });
+
+  // Escape closes the top-most open modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const openBackdrops = Array.from(document.querySelectorAll('.modal-backdrop'))
+      .filter((el) => el.style.display !== 'none');
+    if (openBackdrops.length === 0) return;
+    closeModal(openBackdrops[openBackdrops.length - 1]);
+  });
+})();

@@ -23,3 +23,11 @@ button {
   color: #f44336;
   cursor: pointer;
 }
+
+/* v4.1 fix: logo size aligned with title */
+.header-logo,
+header img.logo {
+  height: 56px;
+  width: auto;
+  max-height: 56px;
+}
