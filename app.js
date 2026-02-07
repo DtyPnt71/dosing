@@ -2087,7 +2087,7 @@ document.addEventListener("DOMContentLoaded", loadAppVersion);
     if (openBackdrops.length === 0) return;
     closeModal(openBackdrops[openBackdrops.length - 1]);
   });
-})()
+})();
 
 // === Start-Hinweis: Berechnung nur nach Gewicht (nicht im Wartungsmodus) ===
 (function initWeightNoticeModal() {
@@ -2100,25 +2100,55 @@ document.addEventListener("DOMContentLoaded", loadAppVersion);
     if (!weightNoticeModal) return;
     weightNoticeModal.style.display = 'none';
   }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    // Wartungsmodus aktiv? Dann keine Meldung anzeigen.
-    if (document.body.classList.contains('is-maintenance')) return;
+  function wireUpCloseHandlers() {
     if (!weightNoticeModal) return;
 
-    // Wire up close handlers
-    if (weightNoticeOk) {
+    if (weightNoticeOk && !weightNoticeOk.__hdt_bound) {
       weightNoticeOk.addEventListener('click', () => close());
+      weightNoticeOk.__hdt_bound = true;
     }
-    weightNoticeModal.addEventListener('click', (e) => {
-      if (e.target === weightNoticeModal) close();
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && weightNoticeModal.style.display !== 'none') close();
-    });
 
-    // Show on every app open
+    if (!weightNoticeModal.__hdt_bound) {
+      weightNoticeModal.addEventListener('click', (e) => {
+        if (e.target === weightNoticeModal) close();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && weightNoticeModal.style.display !== 'none') close();
+      });
+      weightNoticeModal.__hdt_bound = true;
+    }
+  }
+
+  async function isMaintenanceEnabled() {
+    // If the maintenance class is already set, trust it.
+    if (document.body.classList.contains('is-maintenance')) return true;
+
+    // Also read the manifest flag directly (the maintenance overlay sets the class via an async fetch)
+    try {
+      const r = await fetch('manifest.json', { cache: 'no-store' });
+      const m = await r.json();
+      return !!(m && m.maintenance === true);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function init() {
+    if (!weightNoticeModal) return;
+    if (await isMaintenanceEnabled()) return;
+
+    wireUpCloseHandlers();
     open();
-  });
+  }
+
+  function onReady(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn, { once: true });
+    } else {
+      fn();
+    }
+  }
+
+  onReady(() => { init(); });
+
 })();
-;
