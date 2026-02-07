@@ -16,6 +16,9 @@ const installBtn = document.getElementById("installBtn");
 const sampleComment = document.getElementById("sampleComment");
 const toastHost = document.getElementById("toastHost");
 
+const weightNoticeModal = document.getElementById("weightNoticeModal");
+const weightNoticeOk = document.getElementById("weightNoticeOk");
+
 const themeSelect = document.getElementById("themeSelect");
 const exportMenuItem = document.getElementById("exportMenuItem");
 // Legacy fallback: cache reset is triggered via menu action
@@ -226,6 +229,25 @@ let CURRENT_LANG = (localStorage.getItem('hdt-lang') === 'en') ? 'en' : 'de';
 // Parse user-entered numbers in a locale-tolerant way.
 // - Accepts both "6.31" and "6,31"
 // - Ignores spaces and common thousands separators
+
+function enforceNumericInput(el) {
+  if (!el) return;
+  // Allow digits and a single decimal separator (comma or dot). Remove everything else (e.g. letters like "e").
+  let v = String(el.value ?? '');
+  // Replace minus signs and other characters; keep digits, comma, dot
+  v = v.replace(/[^0-9.,]/g, '');
+
+  // If both separators are present, keep the first one and drop the rest
+  const firstSepIdx = v.search(/[.,]/);
+  if (firstSepIdx !== -1) {
+    const head = v.slice(0, firstSepIdx);
+    const sep = v[firstSepIdx];
+    const tail = v.slice(firstSepIdx + 1).replace(/[.,]/g, '');
+    v = head + sep + tail;
+  }
+  if (v !== el.value) el.value = v;
+}
+
 function parseNum(input) {
   if (input == null) return NaN;
   let s = String(input).trim();
@@ -1291,7 +1313,10 @@ function updateStepper() {
 
 [inputA, inputB].forEach((el) =>
   ["input", "change", "keyup"].forEach((event) =>
-    el.addEventListener(event, calcLive)
+    el.addEventListener(event, () => {
+      enforceNumericInput(el);
+      calcLive();
+    })
   )
 );
 
@@ -2062,4 +2087,38 @@ document.addEventListener("DOMContentLoaded", loadAppVersion);
     if (openBackdrops.length === 0) return;
     closeModal(openBackdrops[openBackdrops.length - 1]);
   });
+})()
+
+// === Start-Hinweis: Berechnung nur nach Gewicht (nicht im Wartungsmodus) ===
+(function initWeightNoticeModal() {
+  function open() {
+    if (!weightNoticeModal) return;
+    weightNoticeModal.style.display = 'flex';
+    if (weightNoticeOk) weightNoticeOk.focus();
+  }
+  function close() {
+    if (!weightNoticeModal) return;
+    weightNoticeModal.style.display = 'none';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Wartungsmodus aktiv? Dann keine Meldung anzeigen.
+    if (document.body.classList.contains('is-maintenance')) return;
+    if (!weightNoticeModal) return;
+
+    // Wire up close handlers
+    if (weightNoticeOk) {
+      weightNoticeOk.addEventListener('click', () => close());
+    }
+    weightNoticeModal.addEventListener('click', (e) => {
+      if (e.target === weightNoticeModal) close();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && weightNoticeModal.style.display !== 'none') close();
+    });
+
+    // Show on every app open
+    open();
+  });
 })();
+;

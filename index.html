@@ -120,11 +120,11 @@
         <section class="card input-section">
           <div class="field">
             <label for="inputA">Komponente A:</label>
-            <input type="number" id="inputA" min="0" step="any" />
+            <input type="text" id="inputA" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" pattern="[0-9]*[\.,]?[0-9]*" />
           </div>
           <div class="field">
             <label for="inputB">Komponente B:</label>
-            <input type="number" id="inputB" min="0" step="any" />
+            <input type="text" id="inputB" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" pattern="[0-9]*[\.,]?[0-9]*" />
           </div>
         </section>
 
@@ -280,7 +280,19 @@
           </div>
         </div>
 
-        <!-- Lokale Daten zurücksetzen (Bestätigung) -->
+        
+        <!-- Hinweis beim Start: Berechnung nur nach Gewicht -->
+        <div id="weightNoticeModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="weightNoticeTitle" aria-describedby="weightNoticeText">
+            <h2 id="weightNoticeTitle">Hinweis</h2>
+            <p id="weightNoticeText" class="small" style="opacity:0.85;">Dieses Tool berechnet das Verhältnis ausschließlich nach <strong>Gewicht</strong> (nicht nach Volumen).</p>
+            <div class="modal-actions">
+              <button type="button" id="weightNoticeOk" class="btn-primary">OK</button>
+            </div>
+          </div>
+        </div>
+
+<!-- Lokale Daten zurücksetzen (Bestätigung) -->
         <div id="clearDataModal" class="modal-backdrop" style="display:none;">
           <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="clearDataTitle" aria-describedby="clearDataHint">
             <h2 id="clearDataTitle">Sind Sie sicher?</h2>
