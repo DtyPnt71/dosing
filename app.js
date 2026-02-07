@@ -673,6 +673,11 @@ const machineCommentInput = document.getElementById("machineCommentInput");
 const machineCancel = document.getElementById("machineCancel");
 const machineConfirm = document.getElementById("machineConfirm");
 
+// === Clear local data confirm modal ===
+const clearDataModal = document.getElementById('clearDataModal');
+const clearDataCancel = document.getElementById('clearDataCancel');
+const clearDataConfirm = document.getElementById('clearDataConfirm');
+
 // === Creator name list (dropdown) ===
 // Loaded from external file so names can be maintained without touching JS.
 const CREATOR_NAMES_URL = './creator-names.json';
@@ -831,6 +836,25 @@ function closeMachineModal() {
   if (machineModal) {
     machineModal.style.display = "none";
   }
+  try { document.activeElement && document.activeElement.blur(); } catch(e) {}
+}
+
+function openClearDataModal() {
+  if (!clearDataModal) {
+    // Fallback: falls Modal fehlt, trotzdem zurücksetzen
+    if (typeof clearAppState === 'function') clearAppState();
+    window.location.reload();
+    return;
+  }
+  clearDataModal.style.display = 'flex';
+  // Fokus auf "Nein" für sicherere Default-Action
+  setTimeout(() => {
+    try { clearDataCancel?.focus(); } catch (e) {}
+  }, 10);
+}
+
+function closeClearDataModal() {
+  if (clearDataModal) clearDataModal.style.display = 'none';
   try { document.activeElement && document.activeElement.blur(); } catch(e) {}
 }
 
@@ -1123,6 +1147,30 @@ if (exportAuthModal) {
   });
 }
 
+// Clear local data modal events
+if (clearDataCancel) {
+  clearDataCancel.addEventListener('click', () => closeClearDataModal());
+}
+
+if (clearDataConfirm) {
+  clearDataConfirm.addEventListener('click', () => {
+    closeClearDataModal();
+    if (typeof clearAppState === 'function') {
+      clearAppState();
+    }
+    // Reload page so app state (materials.json + localStorage) is reinitialized cleanly
+    setTimeout(() => {
+      try { window.location.reload(); } catch (e) {}
+    }, 50);
+  });
+}
+
+if (clearDataModal) {
+  clearDataModal.addEventListener('click', (e) => {
+    if (e.target === clearDataModal) closeClearDataModal();
+  });
+}
+
 // Modal-Button-Events
 if (machineCancel) {
   machineCancel.addEventListener("click", () => {
@@ -1183,7 +1231,16 @@ function clearAppState() {
 }
 
 if (clearCacheBtn) {
-  clearCacheBtn.addEventListener("click", clearAppState);
+  clearCacheBtn.addEventListener("click", (e) => {
+    // prevent duplicate handlers when clicked via menu
+    try { e.preventDefault(); } catch (err) {}
+    if (typeof openClearDataModal === 'function') {
+      openClearDataModal();
+    } else {
+      clearAppState();
+      window.location.reload();
+    }
+  });
 }
 
 function calcLive() {
@@ -1899,9 +1956,12 @@ function handleMenuAction(action, btn) {
     case 'lang':
       toggleLanguage();
       break;
-case 'clearCache':
-      if (typeof clearAppState === 'function') {
+    case 'clearCache':
+      if (typeof openClearDataModal === 'function') {
+        openClearDataModal();
+      } else if (typeof clearAppState === 'function') {
         clearAppState();
+        window.location.reload();
       }
       break;
     case 'addMaterial':

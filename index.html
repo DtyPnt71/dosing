@@ -280,6 +280,18 @@
           </div>
         </div>
 
+        <!-- Lokale Daten zurücksetzen (Bestätigung) -->
+        <div id="clearDataModal" class="modal-backdrop" style="display:none;">
+          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="clearDataTitle" aria-describedby="clearDataHint">
+            <h2 id="clearDataTitle">Sind Sie sicher?</h2>
+            <p id="clearDataHint" class="small" style="opacity:0.75;">Durch das Zurücksetzen werden alle lokal gespeicherten Materialien unwiderrufbar gelöscht.</p>
+            <div class="modal-actions">
+              <button type="button" id="clearDataCancel" class="btn-secondary">Nein</button>
+              <button type="button" id="clearDataConfirm" class="btn-primary">Ja</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Custom-Material verwalten Modal -->
         <div id="manageMaterialsModal" class="modal-backdrop" style="display:none;">
           <div class="modal-dialog">
