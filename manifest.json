@@ -19,5 +19,5 @@
     }
   ],
   "scope": "./",
-  "maintenance": false
+  "maintenance": true
 }
