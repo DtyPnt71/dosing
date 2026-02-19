@@ -11,7 +11,25 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="maintenanceOverlay" class="maintenance-overlay" role="status" aria-live="polite">
+    
+  <div id="boot-overlay" class="boot-overlay" aria-live="polite">
+    <div class="boot-card">
+      <img class="boot-logo" src="logo.png" alt="HDT Logo" />
+      <div class="spinner" aria-hidden="true"></div>
+      <h2 id="boot-title">Update-Skript</h2>
+      <div class="boot-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div id="boot-progress-bar" class="boot-progress-bar"></div>
+      </div>
+      <p id="boot-status">Initialisiere…</p>
+      <div id="boot-details" class="boot-details"></div>
+      <div id="boot-actions" class="boot-actions" style="display:none;">
+        <button id="boot-update" class="btn-primary" type="button" style="display:none;">Jetzt aktualisieren</button>
+        <button id="boot-later" class="btn-ghost" type="button" style="display:none;">Später</button>
+        <button id="boot-retry" class="btn-primary" type="button">Neu laden</button>
+      </div>
+    </div>
+  </div>
+<div id="maintenanceOverlay" class="maintenance-overlay" role="status" aria-live="polite">
       <div class="maintenance-card">
         <img class="maintenance-logo" src="logo.png" alt="HDT Logo" />
         <div class="maintenance-gear" aria-hidden="true"></div>

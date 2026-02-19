@@ -1,3 +1,203 @@
+// === Boot / Self-Test (device-agnostic) ===
+(function bootSelfTest() {
+  const onReady = (fn) => {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", fn, { once: true });
+    } else {
+      fn();
+    }
+  };
+
+  function qs(id) { return document.getElementById(id); }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function showBootOverlay() {
+    const overlay = qs("boot-overlay");
+    if (overlay) overlay.style.display = "flex";
+  }
+  function hideBootOverlay() {
+    const overlay = qs("boot-overlay");
+    if (overlay) overlay.style.display = "none";
+  }
+
+  function bootUI() {
+    return {
+      titleEl: qs("boot-title"),
+      statusEl: qs("boot-status"),
+      detailsEl: qs("boot-details"),
+      progressEl: qs("boot-progress-bar"),
+      progressWrap: document.querySelector(".boot-progress"),
+      actionsEl: qs("boot-actions"),
+      retryBtn: qs("boot-retry"),
+      updateBtn: qs("boot-update"),
+      laterBtn: qs("boot-later"),
+    };
+  }
+
+  function setBootProgress(ui, pct) {
+    const clamped = Math.max(0, Math.min(100, pct));
+    if (ui.progressEl) ui.progressEl.style.width = clamped + "%";
+    if (ui.progressWrap) ui.progressWrap.setAttribute("aria-valuenow", String(clamped));
+  }
+
+  function setBootStatus(ui, msg) {
+    if (ui.statusEl) ui.statusEl.textContent = msg;
+    if (ui.detailsEl) {
+      const prefix = ui.detailsEl.textContent ? "\n" : "";
+      ui.detailsEl.textContent += prefix + "• " + msg;
+    }
+  }
+
+  function bootFail(ui, title, err) {
+    if (ui.titleEl) ui.titleEl.textContent = "Update-Skript – Fehler";
+    if (ui.statusEl) ui.statusEl.textContent = title;
+
+    const details = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err || "");
+    if (ui.detailsEl) {
+      const prefix = ui.detailsEl.textContent ? "\n" : "";
+      ui.detailsEl.textContent += prefix + "• FEHLER: " + details;
+    }
+    if (ui.actionsEl) ui.actionsEl.style.display = "flex";
+    if (ui.retryBtn) ui.retryBtn.onclick = () => location.reload();
+
+    // Keep overlay visible to prevent a half-broken UI.
+    throw (err instanceof Error) ? err : new Error(details || title);
+  }
+
+  function showUpdaterPrompt(ui, meta) {
+    // meta: { version, build, onUpdate, onLater }
+    showBootOverlay();
+    if (ui.titleEl) ui.titleEl.textContent = "Update-Skript";
+    if (ui.detailsEl) ui.detailsEl.textContent = "";
+    setBootProgress(ui, 100);
+
+    const v = meta && meta.version ? String(meta.version) : "";
+    const b = meta && meta.build ? String(meta.build) : "";
+    const line = v ? `Neue Version verfügbar: ${v}${b ? ` (${b})` : ""}` : "Neue Version verfügbar.";
+    if (ui.statusEl) ui.statusEl.textContent = line;
+    if (ui.detailsEl) ui.detailsEl.textContent = "• Update kann jetzt installiert werden.\n• Offline-Nutzung bleibt erhalten.";
+
+    if (ui.actionsEl) ui.actionsEl.style.display = "flex";
+    if (ui.retryBtn) ui.retryBtn.style.display = "none";
+    if (ui.updateBtn) ui.updateBtn.style.display = "inline-flex";
+    if (ui.laterBtn) ui.laterBtn.style.display = "inline-flex";
+
+    if (ui.updateBtn) {
+      ui.updateBtn.onclick = async () => {
+        try {
+          ui.updateBtn.disabled = true;
+          if (ui.laterBtn) ui.laterBtn.disabled = true;
+          if (ui.statusEl) ui.statusEl.textContent = "Installiere Update…";
+          if (typeof meta.onUpdate === 'function') await meta.onUpdate();
+        } catch (e) {
+          // If update fails, show retry
+          if (ui.retryBtn) ui.retryBtn.style.display = "inline-flex";
+          if (ui.retryBtn) ui.retryBtn.onclick = () => location.reload();
+          if (ui.statusEl) ui.statusEl.textContent = "Update fehlgeschlagen – bitte neu laden.";
+          console.error(e);
+        }
+      };
+    }
+
+    if (ui.laterBtn) {
+      ui.laterBtn.onclick = () => {
+        if (typeof meta.onLater === 'function') meta.onLater();
+        hideBootOverlay();
+      };
+    }
+  }
+
+  async function runChecks() {
+    const ui = bootUI();
+    showBootOverlay();
+
+    try {
+      setBootProgress(ui, 10);
+      setBootStatus(ui, "1/4 Prüfe Grundstruktur…");
+      await delay(1000);
+
+      // Minimal required elements for core functionality (IDs from index.html)
+      const requiredIds = ["menuBtn", "menuPanel", "exportMenuItem", "pdfReport"];
+      for (const id of requiredIds) {
+        if (!qs(id)) bootFail(ui, `Fehlendes Element: #${id}`, `#${id} nicht gefunden`);
+      }
+
+      setBootProgress(ui, 35);
+      setBootStatus(ui, "2/4 Prüfe Abhängigkeiten…");
+      await delay(1000);
+      if (typeof window.html2pdf !== "function") {
+        bootFail(ui, "PDF-Modul nicht geladen", "window.html2pdf ist nicht verfügbar");
+      }
+
+      setBootProgress(ui, 60);
+      setBootStatus(ui, "3/4 Prüfe Speicherzugriff…");
+      await delay(1000);
+      try {
+        const k = "__boot_test__";
+        localStorage.setItem(k, "1");
+        localStorage.removeItem(k);
+      } catch (e) {
+        bootFail(ui, "Speicherzugriff blockiert (localStorage)", e);
+      }
+
+      // Let layout settle (helps on some mobile browsers)
+      setBootProgress(ui, 85);
+      setBootStatus(ui, "4/4 Finalisiere…");
+      await delay(1000);
+      await new Promise(r => requestAnimationFrame(r));
+      await new Promise(r => setTimeout(r, 60));
+
+      setBootProgress(ui, 100);
+
+      hideBootOverlay();
+      return true;
+    } catch (e) {
+      // bootFail keeps overlay visible
+      return false;
+    }
+  }
+
+  // Expose a promise so other init blocks can wait for it
+  window.__bootReady = new Promise((resolve) => {
+    onReady(async () => {
+      try {
+        const ok = await runChecks();
+        resolve(ok);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  });
+
+  // Expose updater UI for controlled update flow
+  window.__updaterUI = {
+    prompt: (meta) => showUpdaterPrompt(bootUI(), meta),
+  };
+
+  // Global error handlers: show overlay if runtime errors occur
+  window.addEventListener("error", (e) => {
+    try {
+      const ui = bootUI();
+      if (!qs("boot-overlay")) return;
+      showBootOverlay();
+      bootFail(ui, "Unerwarteter Fehler in der App", e.error || e.message || e);
+    } catch (_) {}
+  });
+
+  window.addEventListener("unhandledrejection", (e) => {
+    try {
+      const ui = bootUI();
+      if (!qs("boot-overlay")) return;
+      showBootOverlay();
+      bootFail(ui, "Unerwarteter Fehler (Promise)", e.reason || e);
+    } catch (_) {}
+  });
+})();
+
+// App Version (muss zu version.json passen)
+window.APP_VERSION = "v5";
+
 window.EXPORT_EMAIL = "info@h-d-tec.de";
 // PIN for internal PDF export (change for your deployment)
 window.EXPORT_PIN = window.EXPORT_PIN || "4711";
@@ -992,23 +1192,29 @@ function generatePdfReport(machineNo, reportDate, famText, specText, tolText, me
 
   // --- 4. PDF als Blob erzeugen und Download selbst auslösen ---
 
-  const worker = window.html2pdf()
-    .from(clone)
-    .set({
-      margin: 10,
-      filename: filename,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        scrollY: 0
-      },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    })
-    .toPdf();
+  // Give the browser one frame to layout/paint the cloned report.
+  // This improves reliability on some Android WebViews/Samsung Internet builds.
+  const pdfPromise = Promise.resolve()
+    .then(() => new Promise((r) => requestAnimationFrame(r)))
+    .then(() => {
+      const worker = window.html2pdf()
+        .from(clone)
+        .set({
+          margin: 10,
+          filename: filename,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: {
+            // Lower scale reduces memory pressure (common cause of sporadic failures on tablets)
+            scale: 1.5,
+            useCORS: true,
+            scrollY: 0
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+        })
+        .toPdf();
 
-  const pdfPromise = worker
-    .outputPdf("blob")   // <--- statt .save(): Blob erzeugen
+      return worker.outputPdf("blob");   // <--- statt .save(): Blob erzeugen
+    })
     .then((blob) => {
       const url = URL.createObjectURL(blob);
 
@@ -1429,7 +1635,97 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
 }
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./service-worker.js");
+  (async () => {
+    const reg = await navigator.serviceWorker.register("./service-worker.js");
+
+    const VER_KEY = "hdt_app_version";
+    const BUILD_KEY = "hdt_app_build";
+
+    async function fetchVersion() {
+      try {
+        const res = await fetch("./version.json", { cache: "no-store" });
+        if (!res.ok) throw new Error(`version.json HTTP ${res.status}`);
+        const j = await res.json();
+        return { version: j.version || "", build: j.build || "" };
+      } catch (e) {
+        return null; // offline or blocked
+      }
+    }
+
+    function storeCurrent(meta) {
+      try {
+        if (!meta) return;
+        if (meta.version) localStorage.setItem(VER_KEY, String(meta.version));
+        if (meta.build) localStorage.setItem(BUILD_KEY, String(meta.build));
+      } catch (_) {}
+    }
+
+    function promptUpdate(meta) {
+      if (!window.__updaterUI || typeof window.__updaterUI.prompt !== "function") return;
+
+      window.__updaterUI.prompt({
+        version: meta?.version,
+        build: meta?.build,
+        onLater: () => {
+          // nothing; user stays on current version
+        },
+        onUpdate: async () => {
+          // Trigger SW update lifecycle and activate waiting worker
+          await reg.update().catch(() => {});
+
+          // If an update is waiting now, activate it
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            reg.waiting.postMessage({ type: "PREFETCH_FULL" });
+          }
+
+          // Reload once the new SW takes control
+          let reloaded = false;
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (reloaded) return;
+            reloaded = true;
+            // Persist target version so next boot knows it's updated
+            storeCurrent(meta);
+            location.reload();
+          });
+        }
+      });
+    }
+
+    // Wait until the self-test is finished, then do update check
+    try { await window.__bootReady; } catch (_) {}
+
+    // 1) Wenn ein Worker schon "waiting" ist: Update anbieten
+    const currentMeta = await fetchVersion();
+    if (reg.waiting) {
+      promptUpdate(currentMeta);
+    }
+
+    // 2) Wenn online eine neue version.json vorliegt, anbieten
+    if (currentMeta && currentMeta.version) {
+      let storedVer = "";
+      try { storedVer = localStorage.getItem(VER_KEY) || ""; } catch (_) {}
+
+      // Beim allerersten Start: Version merken, nicht direkt "Update" anbieten
+      if (!storedVer) {
+        storeCurrent(currentMeta);
+      } else if (storedVer !== String(currentMeta.version)) {
+        promptUpdate(currentMeta);
+      }
+    }
+
+    // 3) Updatefound -> wenn installiert & waiting, anbieten
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener("statechange", async () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) {
+          const meta = await fetchVersion();
+          promptUpdate(meta);
+        }
+      });
+    });
+  })();
 }
 
 
@@ -1963,8 +2259,15 @@ loadMaterials();
     const btn = e.target.closest('.menu-item');
     if (!btn) return;
     const action = btn.getAttribute('data-action');
-    handleMenuAction(action, btn);
-    toggleMenu(false);
+    // Defensive: if an action throws, we still want to close the menu.
+    // Otherwise the modal can end up hidden behind the still-open menu on some Android browsers.
+    try {
+      handleMenuAction(action, btn);
+    } catch (err) {
+      console.error('Menu action failed:', err);
+    } finally {
+      toggleMenu(false);
+    }
   });
 })();
 
@@ -2149,6 +2452,6 @@ document.addEventListener("DOMContentLoaded", loadAppVersion);
     }
   }
 
-  onReady(() => { init(); });
+  onReady(async () => { try { await (window.__bootReady || Promise.resolve(true)); } catch(e){} init(); });
 
 })();

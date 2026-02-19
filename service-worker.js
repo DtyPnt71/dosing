@@ -1,19 +1,24 @@
-// Name des Caches mit Versionsnummer, damit alte Caches entfernt werden können
-const CACHE_NAME = 'dosing-cache-v4';
+// HDT Dosing – Service Worker
+// Ziel:
+// - Offline nutzbar (Core-Shell ist gecached)
+// - Updates kontrolliert anbieten: neue Version wird erkannt, aber erst nach Bestätigung aktiviert
 
-// Dateien, die beim Installieren vorab im Cache gespeichert werden
-const urlsToCache = [
+const APP_VERSION = 'v2.1';
+const CACHE_NAME = `dosing-cache-${APP_VERSION}`;
+
+// Minimaler Offline-Shell (damit App immer startet)
+const CORE_URLS = [
   './',
   './index.html',
   './app.js',
   './styles.css',
   './style.css',
+  './version.json',
   './materials.json',
   './creator-names.json',
   './manifest.json',
   './install.js',
   './service-worker.js',
-  './html2pdf.bundle.js',
   './logo.png',
   './icon-192x192.png',
   './icon-512x512.png',
@@ -21,50 +26,88 @@ const urlsToCache = [
   './favicon.png'
 ];
 
-// Beim Installieren alle Ressourcen cachen
-self.addEventListener('install', event => {
+// Optionales Prefetch (erst nach Nutzerbestätigung)
+const FULL_URLS = [
+  ...CORE_URLS,
+  './html2pdf.bundle.js'
+];
+
+self.addEventListener('install', (event) => {
+  // Kein skipWaiting() hier – die App soll Updates zuerst anbieten.
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_URLS))
   );
 });
 
-// Alte Caches löschen und neuen aktivieren
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
-            .map(key => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })()
   );
 });
 
-// Netzwerk‑First, Fallback auf Cache
-self.addEventListener('fetch', event => {
-  // Bei Navigationsanfragen immer erst aus dem Netz laden
-  if (event.request.mode === 'navigate') {
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+  if (data.type === 'PREFETCH_FULL') {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => cache.addAll(FULL_URLS)).catch(() => {})
+    );
+  }
+});
+
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
+
+  // Update-Check soll frisch sein (wenn online), aber offline weiter funktionieren.
+  if (url.pathname.endsWith('/version.json')) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
+      fetch(req)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          return res;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(req))
     );
     return;
   }
-  // Für andere Anfragen: Netz vor Cache
+
+  // Navigationsrequests: Netz zuerst, fallback Cache (offline)
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Für Assets: Stale-while-revalidate
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const respClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, respClone));
-        return response;
-      })
-      .catch(() => caches.match(event.request))
+    caches.match(req).then((cached) => {
+      const networkFetch = fetch(req)
+        .then((res) => {
+          if (req.method === 'GET' && res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return res;
+        })
+        .catch(() => cached);
+
+      return cached || networkFetch;
+    })
   );
 });
