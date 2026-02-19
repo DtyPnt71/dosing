@@ -68,13 +68,13 @@
   function showUpdaterPrompt(ui, meta) {
     // meta: { version, build, onUpdate, onLater }
     showBootOverlay();
-    if (ui.titleEl) ui.titleEl.textContent = "Update-Skript";
+    if (ui.titleEl) ui.titleEl.textContent = "Updater v2";
     if (ui.detailsEl) ui.detailsEl.textContent = "";
     setBootProgress(ui, 100);
 
     const v = meta && meta.version ? String(meta.version) : "";
     const b = meta && meta.build ? String(meta.build) : "";
-    const line = v ? `Neue Version verfügbar: ${v}${b ? ` (${b})` : ""}` : "Neue Version verfügbar.";
+    const line = v ? `Neue Version verfügbar: ${v}${b ? ` (${b})` : ""}` : "Neue Version ist verfügbar!";
     if (ui.statusEl) ui.statusEl.textContent = line;
     if (ui.detailsEl) ui.detailsEl.textContent = "• Update kann jetzt installiert werden.\n• Offline-Nutzung bleibt erhalten.";
 
@@ -88,7 +88,7 @@
         try {
           ui.updateBtn.disabled = true;
           if (ui.laterBtn) ui.laterBtn.disabled = true;
-          if (ui.statusEl) ui.statusEl.textContent = "Installiere Update…";
+          if (ui.statusEl) ui.statusEl.textContent = "Update wird installiert...";
           if (typeof meta.onUpdate === 'function') await meta.onUpdate();
         } catch (e) {
           // If update fails, show retry
@@ -114,7 +114,7 @@
 
     try {
       setBootProgress(ui, 10);
-      setBootStatus(ui, "1/4 Prüfe Grundstruktur…");
+      setBootStatus(ui, "1/4 Prüfe Grundstruktur (ID's + Panel)");
       await delay(1000);
 
       // Minimal required elements for core functionality (IDs from index.html)
@@ -124,14 +124,14 @@
       }
 
       setBootProgress(ui, 35);
-      setBootStatus(ui, "2/4 Prüfe Abhängigkeiten…");
+      setBootStatus(ui, "2/4 Prüfe Abhängigkeiten.. (HTML2PDF)");
       await delay(1000);
       if (typeof window.html2pdf !== "function") {
         bootFail(ui, "PDF-Modul nicht geladen", "window.html2pdf ist nicht verfügbar");
       }
 
       setBootProgress(ui, 60);
-      setBootStatus(ui, "3/4 Prüfe Speicherzugriff…");
+      setBootStatus(ui, "3/4 Prüfe Speicherzugriff (Cache)");
       await delay(1000);
       try {
         const k = "__boot_test__";
@@ -143,7 +143,7 @@
 
       // Let layout settle (helps on some mobile browsers)
       setBootProgress(ui, 85);
-      setBootStatus(ui, "4/4 Finalisiere…");
+      setBootStatus(ui, "4/4 Abschließen...");
       await delay(1000);
       await new Promise(r => requestAnimationFrame(r));
       await new Promise(r => setTimeout(r, 60));
@@ -196,7 +196,8 @@
 })();
 
 // App Version (muss zu version.json passen)
-window.APP_VERSION = "v5";
+// Must match version.json (used for update prompts in PWAs)
+window.APP_VERSION = "v2.3.1";
 
 window.EXPORT_EMAIL = "info@h-d-tec.de";
 // PIN for internal PDF export (change for your deployment)
@@ -283,9 +284,15 @@ const TRANSLATIONS = {
     machine_modal_label_date: 'Datum',
     machine_modal_label_creator: 'Erstellt durch',
     machine_modal_info_title: 'Info:',
-    machine_modal_info_text: 'Export unter iOS inkompatibel!',
+    machine_modal_info_text: 'Tipp: PDF zuerst erstellen, danach öffnen/teilen. E-Mail wird separat gesendet (Textbericht).',
     btn_cancel: 'Abbrechen',
-    btn_continue_export: 'Weiter & exportieren',
+    btn_pdf_create: 'PDF erstellen',
+    btn_pdf_open: 'PDF öffnen',
+    btn_email_send: 'E-Mail senden',
+    export_status_creating: 'PDF wird erstellt …',
+    export_status_ready: 'PDF ist bereit.',
+    export_status_failed: 'PDF konnte nicht erstellt werden.',
+    export_status_hint: 'Hinweis: In PWAs wird das PDF im Viewer geöffnet oder per „Teilen“ weitergegeben.',
     material_modal_title: 'Material hinzufügen',
     material_modal_intro: 'Bitte die Daten für das neue Material eintragen:',
     material_modal_family: 'Materialsorte',
@@ -380,9 +387,15 @@ const TRANSLATIONS = {
     machine_modal_label_date: 'Date',
     machine_modal_label_creator: 'Created by',
     machine_modal_info_title: 'Info:',
-    machine_modal_info_text: 'Export is not supported on iOS!',
+    machine_modal_info_text: 'Tip: First create the PDF, then open/share it. Email is sent separately (text report).',
     btn_cancel: 'Cancel',
-    btn_continue_export: 'Continue & export',
+    btn_pdf_create: 'Create PDF',
+    btn_pdf_open: 'Open PDF',
+    btn_email_send: 'Send email',
+    export_status_creating: 'Creating PDF …',
+    export_status_ready: 'PDF is ready.',
+    export_status_failed: 'Could not create PDF.',
+    export_status_hint: 'Note: In installed PWAs the PDF opens in a viewer or can be shared.',
     material_modal_title: 'Add material',
     material_modal_intro: 'Please enter the data for the new material:',
     material_modal_family: 'Material family',
@@ -768,9 +781,11 @@ function applyLanguage() {
       if (machineCreatorOtherEl) machineCreatorOtherEl.setAttribute('placeholder', t('placeholder_creator_other'));
 
       const machineCancelBtn = document.getElementById('machineCancel');
-      const machineConfirmBtn = document.getElementById('machineConfirm');
+      const machinePdfActionBtn = document.getElementById('machinePdfAction');
+      const machineEmailActionBtn = document.getElementById('machineEmailAction');
       if (machineCancelBtn) machineCancelBtn.textContent = t('btn_cancel');
-      if (machineConfirmBtn) machineConfirmBtn.textContent = t('btn_continue_export');
+      if (machinePdfActionBtn) machinePdfActionBtn.textContent = t('btn_pdf_create');
+      if (machineEmailActionBtn) machineEmailActionBtn.textContent = t('btn_email_send');
     }
 
     // Material modal
@@ -885,6 +900,62 @@ function updateExportButtonState() {
   exportMenuItem.disabled = results.length === 0;
 }
 
+// --- Export UX state (PDF is created first, then opened/shared on explicit user action) ---
+let LAST_EXPORT_PDF = { blob: null, url: null, filename: null };
+
+function resetLastExportPdf() {
+  try {
+    if (LAST_EXPORT_PDF && LAST_EXPORT_PDF.url) {
+      URL.revokeObjectURL(LAST_EXPORT_PDF.url);
+    }
+  } catch (e) {}
+  LAST_EXPORT_PDF = { blob: null, url: null, filename: null };
+}
+
+function setMachineExportStatus(message, type = 'neutral') {
+  if (!machineExportStatus) return;
+  machineExportStatus.style.display = message ? 'block' : 'none';
+  machineExportStatus.textContent = message || '';
+  // Optional: slight color hint
+  try {
+    if (type === 'danger') machineExportStatus.style.color = 'var(--danger)';
+    else if (type === 'ok') machineExportStatus.style.color = 'var(--ok)';
+    else machineExportStatus.style.color = '';
+  } catch (e) {}
+}
+
+function getExportInputsFromModal() {
+  const machineNo = machineInput ? machineInput.value.trim() : '';
+  const reportDate = machineDateInput ? machineDateInput.value.trim() : formatToday();
+  const creatorName = getCreatorNameForExport();
+  const exportComment = machineCommentInput ? String(machineCommentInput.value || '').trim() : '';
+  return { machineNo, reportDate, creatorName, exportComment };
+}
+
+function getExportContextTexts() {
+  const famEl = materialFamily;
+  const specEl = materialSpec;
+  const famText =
+    famEl && famEl.selectedIndex >= 0
+      ? famEl.options[famEl.selectedIndex].textContent.trim()
+      : '';
+  const specText =
+    specEl && specEl.selectedIndex >= 0
+      ? specEl.options[specEl.selectedIndex].textContent.trim()
+      : '';
+
+  let tolText = '';
+  if (tolRange && tolRange.textContent.trim() !== '') {
+    let raw = tolRange.textContent.trim();
+    const colonIdx = raw.lastIndexOf(':');
+    if (colonIdx !== -1) raw = raw.slice(colonIdx + 1).trim();
+    tolText = raw;
+  }
+
+  const meanText = meanResult ? meanResult.textContent.trim() : '';
+  return { famText, specText, tolText, meanText };
+}
+
 // Elemente für Bericht-Modal
 const machineModal = document.getElementById("machineModal");
 const machineInput = document.getElementById("machineInput");
@@ -893,7 +964,9 @@ const machineCreatorSelect = document.getElementById("machineCreatorSelect");
 const machineCreatorOtherInput = document.getElementById("machineCreatorOtherInput");
 const machineCommentInput = document.getElementById("machineCommentInput");
 const machineCancel = document.getElementById("machineCancel");
-const machineConfirm = document.getElementById("machineConfirm");
+const machinePdfAction = document.getElementById("machinePdfAction");
+const machineEmailAction = document.getElementById("machineEmailAction");
+const machineExportStatus = document.getElementById("machineExportStatus");
 
 // === Clear local data confirm modal ===
 const clearDataModal = document.getElementById('clearDataModal');
@@ -1029,10 +1102,34 @@ function formatToday() {
 function openMachineModal() {
   if (!machineModal) {
     // Falls kein Modal vorhanden, direkt exportieren
-    performExport("", formatToday(), "", "");
+    // Fallback: create PDF blob and open in viewer
+    try {
+      const { famText, specText, tolText, meanText } = getExportContextTexts();
+      const machineNo = '';
+      const reportDate = formatToday();
+      const creatorName = '';
+      const exportComment = '';
+      const toastId = showToast(t('toast_exporting'), { type: 'neutral', sticky: true });
+      const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
+      generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment)
+        .then((blob) => {
+          updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
+          const url = URL.createObjectURL(blob);
+          openPdfInViewer(url);
+          setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 60000);
+        })
+        .catch(() => updateToast(toastId, t('export_status_failed'), { type: 'danger', done: true }));
+    } catch (e) {}
     return;
   }
+  // Reset PDF state when opening the export modal
+  resetLastExportPdf();
+  setMachineExportStatus('', 'neutral');
+  if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_create');
   machineModal.style.display = "flex";
+
+  // Guard against accidental immediate close on some mobile/PWA environments
+  try { machineModal.dataset.openedAt = String(Date.now()); } catch(e) {}
 
   if (machineInput) {
     machineInput.value = "";
@@ -1123,10 +1220,73 @@ function isIOS() {
   }
 }
 
-function generatePdfReport(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment) {
+function isStandalone() {
+  try {
+    // iOS Safari (installed) uses navigator.standalone
+    if (window.navigator && window.navigator.standalone) return true;
+    // Modern browsers / Android PWAs
+    return window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+  } catch (e) {
+    return false;
+  }
+}
+
+function openPdfInViewer(url) {
+  // In PWAs, programmatic downloads are often blocked; opening a viewer is more reliable.
+  // Keep this function synchronous (user-gesture) when called.
+  try {
+    const w = window.open(url, '_blank');
+    if (!w) {
+      // Fallback if popups are blocked
+      window.location.href = url;
+    }
+  } catch (e) {
+    try { window.location.href = url; } catch (e2) {}
+  }
+}
+
+function downloadPdf(url, filename) {
+  // NOTE:
+  // - iOS Safari (incl. installed PWA) does not reliably support `a[download]` for blob: URLs.
+  // - Some Android PWAs also block programmatic downloads.
+  // So we keep a best-effort download for regular browsers and fall back to opening the PDF.
+  try {
+    if (isIOS() || isStandalone()) {
+      openPdfInViewer(url);
+      return;
+    }
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    // Some browsers behave better with a real click event.
+    a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    a.remove();
+  } catch (e) {
+    // Fallback: open in viewer
+    openPdfInViewer(url);
+  }
+}
+
+async function trySharePdf(blob, filename) {
+  try {
+    if (!navigator || typeof navigator.share !== 'function') return false;
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) return false;
+    await navigator.share({ files: [file], title: filename });
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment) {
   const root = document.getElementById("pdfReport");
   if (!root || typeof window.html2pdf === "undefined") {
-    return;
+    return Promise.reject(new Error('PDF template (#pdfReport) or html2pdf is missing'));
   }
 
   // --- 1. Template (das versteckte #pdfReport) befüllen ---
@@ -1213,37 +1373,19 @@ function generatePdfReport(machineNo, reportDate, famText, specText, tolText, me
         })
         .toPdf();
 
-      return worker.outputPdf("blob");   // <--- statt .save(): Blob erzeugen
+      return worker.outputPdf("blob");   // Blob erzeugen
     })
     .then((blob) => {
-      const url = URL.createObjectURL(blob);
-
-      if (isIOS()) {
-        // Auf iOS: PDF im neuen Tab/Viewer öffnen, damit Nutzer es speichern/teilen kann
-        window.open(url, "_blank");
-      } else {
-        // Download-Link simulieren
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-
-      // URL nach einer Weile wieder freigeben
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-      }, 60000);
-    })
-    .then(() => {
+      // Restore scroll and cleanup before returning the blob.
       window.scrollTo(prevScrollX, prevScrollY);
       cleanup();
+      return blob;
     })
     .catch((e) => {
       console.error("PDF-Export fehlgeschlagen:", e);
       window.scrollTo(prevScrollX, prevScrollY);
       cleanup();
+      throw e;
     });
 
   return pdfPromise;
@@ -1282,70 +1424,22 @@ function performExport(machineNo, reportDate, creatorName, exportComment) {
   // Mittelwert
   const meanText = meanResult ? meanResult.textContent.trim() : "";
 
-  // 1) PDF erzeugen (liefert Promise, wenn html2pdf das unterstützt)
   const toastId = showToast(t('toast_exporting'), { type: 'neutral', sticky: true });
-  let pdfPromise;
-  try {
-    pdfPromise = generatePdfReport(
-      machineNo,
-      reportDate,
-      famText,
-      specText,
-      tolText,
-      meanText,
-      creatorName,
-      exportComment
-    );
-  } catch (e) {
-    console.error("PDF-Export fehlgeschlagen:", e);
-  }
-
-  // 2) Textbericht für E-Mail erzeugen
-  const reportText = buildReport(
-    machineNo,
-    reportDate,
-    famText,
-    specText,
-    tolText,
-    meanText,
-    creatorName
-  );
-
-  // Hilfsfunktion: Mail öffnen
-  const sendMail = () => {
-    if (window.EXPORT_EMAIL && typeof window.EXPORT_EMAIL === "string") {
-      const subject = encodeURIComponent("Mischungsverhältnis Bericht");
-      const body = encodeURIComponent(reportText);
-      const mailto =
-        "mailto:" +
-        encodeURIComponent(window.EXPORT_EMAIL) +
-        "?subject=" +
-        subject +
-        "&body=" +
-        body;
-      window.location.href = mailto;
-    }
-  };
-
-  // 3) Auf PDF-Promise warten – dann Mail öffnen
-  if (pdfPromise && typeof pdfPromise.then === "function") {
-    pdfPromise
-      .then(() => {
-        updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
-        // PDF-Finish → jetzt Mail-App öffnen
-        sendMail();
-      })
-      .catch((e) => {
-        console.error("PDF-Export fehlgeschlagen (Promise):", e);
-        updateToast(toastId, 'PDF-Export fehlgeschlagen', { type: 'danger', done: true });
-        // zur Sicherheit trotzdem Mail öffnen
-        sendMail();
-      });
-  } else {
-    updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
-    // Fallback: wenn kein Promise zurückkommt, verhalten wie bisher
-    sendMail();
-  }
+  const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
+  Promise.resolve()
+    .then(() => generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment))
+    .then((blob) => {
+      updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
+      const url = URL.createObjectURL(blob);
+      // Prefer downloads in regular browser mode; in installed PWAs a viewer is typically more reliable.
+      if (isStandalone()) openPdfInViewer(url);
+      else downloadPdf(url, filename);
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 60000);
+    })
+    .catch((e) => {
+      console.error("PDF-Export fehlgeschlagen:", e);
+      updateToast(toastId, t('export_status_failed'), { type: 'danger', done: true });
+    });
 }
 
 
@@ -1368,11 +1462,9 @@ if (exportPasswordInput) {
 }
 
 if (exportAuthModal) {
-  exportAuthModal.addEventListener('click', (e) => {
-    if (e.target === exportAuthModal) {
-      closeExportAuthModal();
-    }
-  });
+  // Do NOT close on backdrop click.
+  // Reason: on mobile/PWA devices accidental taps outside would close the modal and break the flow.
+  // Users must explicitly choose "Abbrechen" or "Weiter".
 }
 
 // Clear local data modal events
@@ -1406,14 +1498,146 @@ if (machineCancel) {
   });
 }
 
-if (machineConfirm) {
-  machineConfirm.addEventListener("click", () => {
-    const machineNo = machineInput ? machineInput.value.trim() : "";
-    const reportDate = machineDateInput ? machineDateInput.value.trim() : formatToday();
-    const creatorName = getCreatorNameForExport();
-    const exportComment = machineCommentInput ? String(machineCommentInput.value || "").trim() : "";
-    closeMachineModal();
-    performExport(machineNo, reportDate, creatorName, exportComment);
+// Do NOT close the report modal when clicking the backdrop.
+// Reason: on touch devices users often tap next to the dialog by accident (especially while scrolling),
+// which would discard the form state and interrupt the PDF download/share flow.
+
+if (machinePdfAction) {
+  machinePdfAction.addEventListener('click', async () => {
+    // If a PDF is already prepared, allow the user to open/download it again.
+    if (LAST_EXPORT_PDF && LAST_EXPORT_PDF.blob && LAST_EXPORT_PDF.url && LAST_EXPORT_PDF.filename) {
+      const shared = await trySharePdf(LAST_EXPORT_PDF.blob, LAST_EXPORT_PDF.filename);
+      if (!shared) {
+        // Best effort: download in browser, open in viewer in standalone.
+        if (isStandalone()) openPdfInViewer(LAST_EXPORT_PDF.url);
+        else downloadPdf(LAST_EXPORT_PDF.url, LAST_EXPORT_PDF.filename);
+      }
+      return;
+    }
+
+    const { machineNo, reportDate, creatorName, exportComment } = getExportInputsFromModal();
+    const { famText, specText, tolText, meanText } = getExportContextTexts();
+    const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
+
+    // In PWAs, programmatic downloads can be blocked. Prefer a real "Save as…" flow when supported.
+    let saveHandle = null;
+    if (typeof window.showSaveFilePicker === 'function') {
+      try {
+        saveHandle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }]
+        });
+      } catch (e) {
+        // User cancelled the save dialog -> abort without errors.
+        if (e && (e.name === 'AbortError' || e.name === 'NotAllowedError')) return;
+        console.warn('showSaveFilePicker failed, falling back:', e);
+        saveHandle = null;
+      }
+    }
+
+    // As an additional fallback (especially for Samsung/Android PWAs), open a preview window/tab synchronously.
+    let preOpenedWindow = null;
+    if (!saveHandle && isStandalone()) {
+      try {
+        preOpenedWindow = window.open('', '_blank');
+        if (preOpenedWindow && preOpenedWindow.document) {
+          preOpenedWindow.document.write('<!doctype html><title>PDF wird erstellt…</title><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font-family:system-ui;padding:16px"><h3>PDF wird erstellt…</h3><p>Bitte einen Moment warten.</p></body>');
+          preOpenedWindow.document.close();
+        }
+      } catch (e) {
+        preOpenedWindow = null;
+      }
+    }
+
+    if (machinePdfAction) machinePdfAction.disabled = true;
+    setMachineExportStatus(t('export_status_creating'), 'neutral');
+    const toastId = showToast(t('toast_exporting'), { type: 'neutral', sticky: true });
+
+    try {
+      const blob = await generatePdfBlob(
+        machineNo,
+        reportDate,
+        famText,
+        specText,
+        tolText,
+        meanText,
+        creatorName,
+        exportComment
+      );
+
+      // 1) If we have a save handle, write the file directly (most reliable in PWAs).
+      if (saveHandle) {
+        const writable = await saveHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+
+        const url = URL.createObjectURL(blob);
+        resetLastExportPdf();
+        LAST_EXPORT_PDF = { blob, url, filename };
+
+        updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
+        setMachineExportStatus(t('export_status_ready'), 'ok');
+        if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_open');
+        return;
+      }
+
+      // 2) Otherwise: create an object URL and trigger download/open.
+      const url = URL.createObjectURL(blob);
+      resetLastExportPdf();
+      LAST_EXPORT_PDF = { blob, url, filename };
+
+      // Try to download immediately (requirement). In standalone PWAs this can be blocked; we also open the viewer as fallback.
+      try {
+        downloadPdf(url, filename);
+      } catch (e) {
+        console.warn('downloadPdf failed:', e);
+      }
+
+      if (isStandalone()) {
+        // Ensure the user sees the PDF even if the download is blocked.
+        if (preOpenedWindow) {
+          try { preOpenedWindow.location.href = url; } catch (e) { /* ignore */ }
+        } else {
+          openPdfInViewer(url);
+        }
+      }
+
+      updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
+      setMachineExportStatus(t('export_status_ready'), 'ok');
+      if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_open');
+    } catch (e) {
+      console.error('PDF creation failed:', e);
+      updateToast(toastId, t('export_status_failed'), { type: 'danger', done: true });
+      setMachineExportStatus(t('export_status_failed'), 'danger');
+    } finally {
+      if (machinePdfAction) machinePdfAction.disabled = false;
+    }
+  });
+}
+
+if (machineEmailAction) {
+  machineEmailAction.addEventListener('click', () => {
+    const { machineNo, reportDate, creatorName } = getExportInputsFromModal();
+    const { famText, specText, tolText, meanText } = getExportContextTexts();
+    const reportText = buildReport(machineNo, reportDate, famText, specText, tolText, meanText, creatorName);
+
+    if (window.EXPORT_EMAIL && typeof window.EXPORT_EMAIL === 'string') {
+      const subject = encodeURIComponent('Mischungsverhältnis Bericht');
+      const body = encodeURIComponent(reportText);
+      const mailto =
+        'mailto:' +
+        encodeURIComponent(window.EXPORT_EMAIL) +
+        '?subject=' +
+        subject +
+        '&body=' +
+        body;
+      // Must happen as a direct user gesture for best compatibility (especially in PWAs)
+      try { window.location.href = mailto; } catch (e) {}
+      // Keep modal open; user might come back and still want to create/open the PDF.
+      return;
+    }
+
+    showToast('Keine Export-E-Mail-Adresse konfiguriert.', { type: 'danger' });
   });
 }
 
@@ -2377,9 +2601,13 @@ document.addEventListener("DOMContentLoaded", loadAppVersion);
       return;
     }
 
-    // Click on backdrop closes modal
+    // Click on backdrop closes modal (unless explicitly disabled)
     const backdrop = e.target.classList && e.target.classList.contains('modal-backdrop') ? e.target : null;
-    if (backdrop) closeModal(backdrop);
+    if (backdrop) {
+      const allow = backdrop.getAttribute('data-backdrop-close');
+      if (String(allow).toLowerCase() === 'false') return;
+      closeModal(backdrop);
+    }
   });
 
   // Escape closes the top-most open modal

@@ -3,7 +3,8 @@
 // - Offline nutzbar (Core-Shell ist gecached)
 // - Updates kontrolliert anbieten: neue Version wird erkannt, aber erst nach Bestätigung aktiviert
 
-const APP_VERSION = 'v2.1';
+// IMPORTANT: bump this when shipping changes so installed PWAs (Samsung Internet / Chrome) actually refresh caches.
+const APP_VERSION = 'v2.3.1';
 const CACHE_NAME = `dosing-cache-${APP_VERSION}`;
 
 // Minimaler Offline-Shell (damit App immer startet)

@@ -769,7 +769,18 @@ body.theme-sunset .mean-section .value-chip {
   background: rgba(15, 23, 42, 0.75);
   display: none;
   justify-content: center;
-  align-items: center;
+  /*
+    Android/Samsung PWA: When the on-screen keyboard opens, the visual viewport
+    height changes. If the dialog is vertically centered, the browser keeps
+    re-centering it while also scrolling the focused input into view -> the
+    modal looks like it "jumps".
+    Anchor the dialog near the top instead.
+  */
+  align-items: flex-start;
+  padding-top: 10vh;
+  padding-bottom: 10vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   /* Always above the menu / other overlays (Android browsers can otherwise hide it behind the menu) */
   z-index: 1000;
 }
@@ -782,6 +793,15 @@ body.theme-sunset .mean-section .value-chip {
   max-width: 320px;
   width: 90%;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.9);
+  /* Prevent the dialog from growing beyond the visible (dynamic) viewport */
+  max-height: calc(100vh - 20vh);
+  overflow: auto;
+}
+
+@supports (height: 100dvh) {
+  .modal-dialog {
+    max-height: calc(100dvh - 20dvh);
+  }
 }
 
 .modal-dialog h2 {

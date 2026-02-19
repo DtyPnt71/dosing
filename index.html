@@ -2,7 +2,12 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      PWA/Android keyboards can resize the *visual* viewport and cause fixed,
+      centered modals to jump while focusing inputs. "interactive-widget" helps
+      browsers handle the on-screen keyboard more predictably.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#0f0f0f" />
     <title>HDT GmbH - Dosing</title>
 
@@ -217,7 +222,7 @@
         </div>
 
         <!-- Maschinen-Nr Modal -->
-        <div id="machineModal" class="modal-backdrop" style="display:none;">
+        <div id="machineModal" class="modal-backdrop" data-backdrop-close="false" style="display:none;">
           <div class="modal-dialog">
             <h2 id="machineModalTitle">Berichtsdaten</h2>
             <p id="machineModalIntro">Bitte Angaben für den Bericht eintragen:</p>
@@ -239,15 +244,17 @@
             <p></p>
             <h2 id="machineModalInfoTitle">Info:</h2>
             <p id="machineModalInfoText">Export unter iOS inkompatibel!</p>
+            <div id="machineExportStatus" class="small" style="margin-top:0.5rem; display:none;"></div>
             <div class="modal-actions">
               <button type="button" id="machineCancel" class="btn-secondary">Abbrechen</button>
-              <button type="button" id="machineConfirm" class="btn-primary">Weiter &amp; exportieren</button>
+              <button type="button" id="machinePdfAction" class="btn-primary">PDF erstellen</button>
+              <button type="button" id="machineEmailAction" class="btn-secondary">E-Mail</button>
             </div>
           </div>
         </div>
 
         <!-- Export Passwort (intern) -->
-        <div id="exportAuthModal" class="modal-backdrop" style="display:none;">
+        <div id="exportAuthModal" class="modal-backdrop" data-backdrop-close="false" style="display:none;">
           <div class="modal-dialog">
             <h2 id="exportAuthTitle">Interner Export</h2>
             <p id="exportAuthIntro" class="small">Diese Funktion ist nur für interne Zwecke gedacht. Der PDF-Bericht wird im HDT-Layout erzeugt.</p>
