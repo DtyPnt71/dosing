@@ -4,7 +4,7 @@
 // - Updates kontrolliert anbieten: neue Version wird erkannt, aber erst nach Bestätigung aktiviert
 
 // IMPORTANT: bump this when shipping changes so installed PWAs (Samsung Internet / Chrome) actually refresh caches.
-const APP_VERSION = 'v2.3.1';
+const APP_VERSION = 'v2.2';
 const CACHE_NAME = `dosing-cache-${APP_VERSION}`;
 
 // Minimaler Offline-Shell (damit App immer startet)

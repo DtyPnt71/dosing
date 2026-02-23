@@ -8,9 +8,8 @@
     }
   };
 
-  function qs(id) { return document.getElementById(id); }
-
-  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+  const qs = (id) => document.getElementById(id);
+  const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function showBootOverlay() {
     const overlay = qs("boot-overlay");
@@ -35,6 +34,31 @@
     };
   }
 
+  function clearDetails(ui) {
+    if (!ui.detailsEl) return;
+    ui.detailsEl.innerHTML = "";
+  }
+
+  function appendDetailLine(ui, text, kind = "bullet") {
+    if (!ui.detailsEl) return;
+
+    const el = ui.detailsEl;
+
+    // Auto-scroll nur, wenn der Nutzer nicht bewusst nach oben gescrollt hat
+    // (sonst würde es „gegen“ den Nutzer scrollen).
+    const nearBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) < 40;
+
+    const line = document.createElement("div");
+    line.className = kind === "log" ? "boot-log" : "boot-bullet";
+    line.textContent = kind === "log" ? text : "• " + text;
+    el.appendChild(line);
+
+    if (nearBottom) {
+      // rAF damit Layout/ScrollHeight korrekt ist (iOS/Samsung PWA)
+      requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+    }
+  }
+
   function setBootProgress(ui, pct) {
     const clamped = Math.max(0, Math.min(100, pct));
     if (ui.progressEl) ui.progressEl.style.width = clamped + "%";
@@ -43,40 +67,160 @@
 
   function setBootStatus(ui, msg) {
     if (ui.statusEl) ui.statusEl.textContent = msg;
-    if (ui.detailsEl) {
-      const prefix = ui.detailsEl.textContent ? "\n" : "";
-      ui.detailsEl.textContent += prefix + "• " + msg;
-    }
+    appendDetailLine(ui, msg, "bullet");
   }
 
   function bootFail(ui, title, err) {
     if (ui.titleEl) ui.titleEl.textContent = "Update-Skript – Fehler";
     if (ui.statusEl) ui.statusEl.textContent = title;
 
-    const details = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err || "");
-    if (ui.detailsEl) {
-      const prefix = ui.detailsEl.textContent ? "\n" : "";
-      ui.detailsEl.textContent += prefix + "• FEHLER: " + details;
-    }
+    const details = err && (err.stack || err.message) ? (err.stack || err.message) : String(err || "");
+    appendDetailLine(ui, `FEHLER: ${details || title}`, "bullet");
+
     if (ui.actionsEl) ui.actionsEl.style.display = "flex";
     if (ui.retryBtn) ui.retryBtn.onclick = () => location.reload();
 
     // Keep overlay visible to prevent a half-broken UI.
-    throw (err instanceof Error) ? err : new Error(details || title);
+    throw err instanceof Error ? err : new Error(details || title);
+  }
+
+  function parseBuildMeta(buildStr) {
+    const build = String(buildStr || "").trim();
+    // Expected examples:
+    // "Build:2026-02-19 Fix:pdf-export, Skalierung, PWA-backdrop"
+    // "Build:2026-02-19 | Fixes: A, B, C"
+    const meta = { buildDate: "", label: build, changes: [] };
+    if (!build) return meta;
+
+    const mDate = build.match(/\bBuild\s*:\s*([^\s|]+)\b/i);
+    if (mDate) meta.buildDate = mDate[1].trim();
+
+    const mFix = build.match(/\b(?:Fix(?:es)?|Changes?)\s*:\s*(.+)$/i);
+    if (mFix && mFix[1]) {
+      meta.changes = mFix[1]
+        .split(/\s*,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+
+    return meta;
+  }
+
+  function renderUpdateDetails(ui, meta) {
+    clearDetails(ui);
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "boot-update-details";
+
+    const versionLine = document.createElement("div");
+    versionLine.className = "boot-update-version";
+    versionLine.textContent = meta?.version ? `Version ${meta.version}` : "Neue Version";
+    wrapper.appendChild(versionLine);
+
+    const buildMeta = parseBuildMeta(meta?.build);
+    if (buildMeta.buildDate) {
+      const buildLine = document.createElement("div");
+      buildLine.className = "boot-update-build";
+      buildLine.textContent = `Build: ${buildMeta.buildDate}`;
+      wrapper.appendChild(buildLine);
+    } else if (meta?.build) {
+      const buildLine = document.createElement("div");
+      buildLine.className = "boot-update-build";
+      buildLine.textContent = String(meta.build);
+      wrapper.appendChild(buildLine);
+    }
+
+    const sections = [];
+
+    const added = Array.isArray(meta?.added) ? meta.added.filter(Boolean) : [];
+    const fixed = Array.isArray(meta?.fixed) ? meta.fixed.filter(Boolean) : [];
+    const removed = Array.isArray(meta?.removed) ? meta.removed.filter(Boolean) : [];
+
+    // Backward compat:
+    // - "changes" (legacy) is treated as Added
+    // - "Fix:" info inside build-string is treated as Fixed (NOT Added)
+    const legacyChanges = Array.isArray(meta?.changes) ? meta.changes.filter(Boolean) : [];
+    const legacyFixesFromBuild = Array.isArray(buildMeta.changes) ? buildMeta.changes : [];
+
+    const finalAdded = added.length ? added : legacyChanges;
+    const finalFixed = fixed.length ? fixed : legacyFixesFromBuild;
+    const finalRemoved = removed;
+
+    if (finalAdded.length) sections.push({ title: "Added", items: finalAdded });
+    if (finalFixed.length) sections.push({ title: "Fixed", items: finalFixed });
+    if (finalRemoved.length) sections.push({ title: "Removed", items: finalRemoved });
+
+    if (sections.length) {
+      sections.forEach((sec) => {
+        const title = document.createElement("div");
+        title.className = "boot-update-section-title";
+        title.textContent = sec.title;
+        wrapper.appendChild(title);
+
+        const ul = document.createElement("ul");
+        ul.className = "boot-update-list";
+        sec.items.slice(0, 12).forEach((c) => {
+          const li = document.createElement("li");
+          li.textContent = c;
+          ul.appendChild(li);
+        });
+        wrapper.appendChild(ul);
+      });
+    } else {
+      const hint = document.createElement("div");
+      hint.className = "boot-update-hint";
+      hint.textContent = "Update kann jetzt installiert werden. Offline-Nutzung bleibt erhalten.";
+      wrapper.appendChild(hint);
+    }
+
+    ui.detailsEl?.appendChild(wrapper);
+  }
+
+  async function runPseudoUpdateLog(ui) {
+    clearDetails(ui);
+    setBootProgress(ui, 0);
+
+    // Pseudo-Fortschritt: bewusst "lesbar" langsam.
+    // (Vor allem in PWAs wird sonst sofort neu geladen und der Nutzer sieht nichts.)
+    const steps = [
+      { p: 8,  t: "Connecting to update server…", d: 1300 },
+      { p: 14, t: "Connected successfully",       d: 900  },
+      { p: 22, t: "Checking package integrity (md5)…", d: 420 },
+      { p: 30, t: "Approved",                    d: 420  },
+      { p: 44, t: "Reading data…",               d: 900 },
+      { p: 58, t: "Downloading update…",         d: 1600 },
+      { p: 74, t: "Applying update…",            d: 1000 },
+      { p: 88, t: "Finalizing…",                 d: 1100 },
+    ];
+
+    for (const s of steps) {
+      appendDetailLine(ui, s.t, "log");
+      setBootProgress(ui, s.p);
+      await delay(typeof s.d === "number" ? s.d : 900);
+    }
+
+    let p = 90;
+    // "Warten" etwas länger, aber nicht zu spammy.
+    let spinCount = 0;
+    while (p < 98) {
+      appendDetailLine(ui, "Waiting for activation…", "log");
+      p += 2;
+      setBootProgress(ui, p);
+      spinCount += 1;
+      await delay(spinCount <= 2 ? 1200 : 900);
+    }
   }
 
   function showUpdaterPrompt(ui, meta) {
-    // meta: { version, build, onUpdate, onLater }
     showBootOverlay();
-    if (ui.titleEl) ui.titleEl.textContent = "Updater v2";
-    if (ui.detailsEl) ui.detailsEl.textContent = "";
+    if (ui.titleEl) ui.titleEl.textContent = "Update verfügbar";
     setBootProgress(ui, 100);
 
     const v = meta && meta.version ? String(meta.version) : "";
-    const b = meta && meta.build ? String(meta.build) : "";
-    const line = v ? `Neue Version verfügbar: ${v}${b ? ` (${b})` : ""}` : "Neue Version ist verfügbar!";
+    const line = v ? `Neue Version: ${v}` : "Neue Version ist verfügbar!";
     if (ui.statusEl) ui.statusEl.textContent = line;
-    if (ui.detailsEl) ui.detailsEl.textContent = "• Update kann jetzt installiert werden.\n• Offline-Nutzung bleibt erhalten.";
+
+    renderUpdateDetails(ui, meta);
 
     if (ui.actionsEl) ui.actionsEl.style.display = "flex";
     if (ui.retryBtn) ui.retryBtn.style.display = "none";
@@ -88,10 +232,20 @@
         try {
           ui.updateBtn.disabled = true;
           if (ui.laterBtn) ui.laterBtn.disabled = true;
-          if (ui.statusEl) ui.statusEl.textContent = "Update wird installiert...";
-          if (typeof meta.onUpdate === 'function') await meta.onUpdate();
+
+          if (ui.statusEl) ui.statusEl.textContent = "Update wird installiert…";
+          // Pseudo-Log vollständig abspielen, damit man jeden Schritt lesen kann.
+          // Erst danach echten Update-Trigger (SW Activation + Reload) starten.
+          try {
+            await runPseudoUpdateLog(ui);
+          } catch (_) {}
+
+          appendDetailLine(ui, "Restarting application…", "log");
+          setBootProgress(ui, 99);
+          await delay(900);
+
+          if (typeof meta.onUpdate === "function") await meta.onUpdate();
         } catch (e) {
-          // If update fails, show retry
           if (ui.retryBtn) ui.retryBtn.style.display = "inline-flex";
           if (ui.retryBtn) ui.retryBtn.onclick = () => location.reload();
           if (ui.statusEl) ui.statusEl.textContent = "Update fehlgeschlagen – bitte neu laden.";
@@ -102,7 +256,7 @@
 
     if (ui.laterBtn) {
       ui.laterBtn.onclick = () => {
-        if (typeof meta.onLater === 'function') meta.onLater();
+        if (typeof meta.onLater === "function") meta.onLater();
         hideBootOverlay();
       };
     }
@@ -115,24 +269,23 @@
     try {
       setBootProgress(ui, 10);
       setBootStatus(ui, "1/4 Prüfe Grundstruktur (ID's + Panel)");
-      await delay(1000);
+      await delay(1450);
 
-      // Minimal required elements for core functionality (IDs from index.html)
-      const requiredIds = ["menuBtn", "menuPanel", "exportMenuItem", "pdfReport"];
+      const requiredIds = ["menuBtn", "menuPanel", "exportMenuItem", "pdfReport"]; 
       for (const id of requiredIds) {
         if (!qs(id)) bootFail(ui, `Fehlendes Element: #${id}`, `#${id} nicht gefunden`);
       }
 
       setBootProgress(ui, 35);
       setBootStatus(ui, "2/4 Prüfe Abhängigkeiten.. (HTML2PDF)");
-      await delay(1000);
+      await delay(500);
       if (typeof window.html2pdf !== "function") {
         bootFail(ui, "PDF-Modul nicht geladen", "window.html2pdf ist nicht verfügbar");
       }
 
       setBootProgress(ui, 60);
       setBootStatus(ui, "3/4 Prüfe Speicherzugriff (Cache)");
-      await delay(1000);
+      await delay(350);
       try {
         const k = "__boot_test__";
         localStorage.setItem(k, "1");
@@ -141,41 +294,35 @@
         bootFail(ui, "Speicherzugriff blockiert (localStorage)", e);
       }
 
-      // Let layout settle (helps on some mobile browsers)
       setBootProgress(ui, 85);
       setBootStatus(ui, "4/4 Abschließen...");
-      await delay(1000);
-      await new Promise(r => requestAnimationFrame(r));
-      await new Promise(r => setTimeout(r, 60));
+      await delay(350);
+      await new Promise((r) => requestAnimationFrame(r));
+      await new Promise((r) => setTimeout(r, 60));
 
       setBootProgress(ui, 100);
-
       hideBootOverlay();
       return true;
     } catch (e) {
-      // bootFail keeps overlay visible
       return false;
     }
   }
 
-  // Expose a promise so other init blocks can wait for it
   window.__bootReady = new Promise((resolve) => {
     onReady(async () => {
       try {
         const ok = await runChecks();
         resolve(ok);
-      } catch (e) {
+      } catch (_) {
         resolve(false);
       }
     });
   });
 
-  // Expose updater UI for controlled update flow
   window.__updaterUI = {
     prompt: (meta) => showUpdaterPrompt(bootUI(), meta),
   };
 
-  // Global error handlers: show overlay if runtime errors occur
   window.addEventListener("error", (e) => {
     try {
       const ui = bootUI();
@@ -194,10 +341,9 @@
     } catch (_) {}
   });
 })();
-
 // App Version (muss zu version.json passen)
 // Must match version.json (used for update prompts in PWAs)
-window.APP_VERSION = "v2.3.1";
+window.APP_VERSION = "v2.2";
 
 window.EXPORT_EMAIL = "info@h-d-tec.de";
 // PIN for internal PDF export (change for your deployment)
@@ -1870,7 +2016,16 @@ if ("serviceWorker" in navigator) {
         const res = await fetch("./version.json", { cache: "no-store" });
         if (!res.ok) throw new Error(`version.json HTTP ${res.status}`);
         const j = await res.json();
-        return { version: j.version || "", build: j.build || "" };
+        return {
+          version: j.version || "",
+          build: j.build || "",
+          // Preferred: categorized release notes (accept common variants/casing)
+          added: Array.isArray(j.added) ? j.added : (Array.isArray(j.Added) ? j.Added : []),
+          fixed: Array.isArray(j.fixed) ? j.fixed : (Array.isArray(j.Fixed) ? j.Fixed : (Array.isArray(j.fixes) ? j.fixes : [])),
+          removed: Array.isArray(j.removed) ? j.removed : (Array.isArray(j.Removed) ? j.Removed : []),
+          // Backward compat
+          changes: Array.isArray(j.changes) ? j.changes : (Array.isArray(j.Changes) ? j.Changes : [])
+        };
       } catch (e) {
         return null; // offline or blocked
       }
@@ -1890,6 +2045,10 @@ if ("serviceWorker" in navigator) {
       window.__updaterUI.prompt({
         version: meta?.version,
         build: meta?.build,
+        added: meta?.added,
+        fixed: meta?.fixed,
+        removed: meta?.removed,
+        changes: meta?.changes,
         onLater: () => {
           // nothing; user stays on current version
         },
