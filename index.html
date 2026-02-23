@@ -52,6 +52,10 @@
       (function(){
         function enableMaintenance(){
           document.body.classList.add('is-maintenance');
+          // If maintenance is enabled we want it to take effect immediately,
+          // even if the boot/update overlay is currently visible.
+          var boot = document.getElementById('boot-overlay');
+          if (boot) boot.style.display = 'none';
           var btn = document.getElementById('maintenanceReloadBtn');
           if (btn) btn.addEventListener('click', function(){ location.reload(); });
         }

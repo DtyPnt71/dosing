@@ -1,7 +1,7 @@
 {
-  "version": "v2.2",
+  "version": "v2.2.1",
   "build": "Build:2026-02-23",
-  "added": ["md5 check", "Update-Server"],
-  "fixed": ["UI Keyboard glitch", "failed update process"],
+  "added": ["robust update activation", "maintenance applies immediately"],
+  "fixed": ["update stuck on activation/restart", "manifest maintenance flag served stale"],
   "removed": ["animations"]
 }

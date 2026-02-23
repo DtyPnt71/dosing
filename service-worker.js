@@ -4,7 +4,7 @@
 // - Updates kontrolliert anbieten: neue Version wird erkannt, aber erst nach Bestätigung aktiviert
 
 // IMPORTANT: bump this when shipping changes so installed PWAs (Samsung Internet / Chrome) actually refresh caches.
-const APP_VERSION = 'v2.2';
+const APP_VERSION = 'v2.2.1';
 const CACHE_NAME = `dosing-cache-${APP_VERSION}`;
 
 // Minimaler Offline-Shell (damit App immer startet)
@@ -69,6 +69,22 @@ self.addEventListener('fetch', (event) => {
 
   // Update-Check soll frisch sein (wenn online), aber offline weiter funktionieren.
   if (url.pathname.endsWith('/version.json')) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Maintenance flag lives in manifest.json.
+  // If this is served stale, the app will only enter maintenance after a restart.
+  // Therefore: network-first (like version.json) with cache fallback.
+  if (url.pathname.endsWith('/manifest.json')) {
     event.respondWith(
       fetch(req)
         .then((res) => {

@@ -343,7 +343,7 @@
 })();
 // App Version (muss zu version.json passen)
 // Must match version.json (used for update prompts in PWAs)
-window.APP_VERSION = "v2.2";
+window.APP_VERSION = "v2.2.1";
 
 window.EXPORT_EMAIL = "info@h-d-tec.de";
 // PIN for internal PDF export (change for your deployment)
@@ -2053,30 +2053,77 @@ if ("serviceWorker" in navigator) {
           // nothing; user stays on current version
         },
         onUpdate: async () => {
-          // Trigger SW update lifecycle and activate waiting worker
-          await reg.update().catch(() => {});
+          // Robust, device-agnostic SW activation:
+          // - Chrome/Firefox (Windows)
+          // - Samsung Internet PWA
+          // - iOS PWA (fallback reload)
 
-          // If an update is waiting now, activate it
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: "SKIP_WAITING" });
-            reg.waiting.postMessage({ type: "PREFETCH_FULL" });
-          }
-
-          // Reload once the new SW takes control
+          // 1) Listen early so we don't miss a fast controllerchange.
           let reloaded = false;
-          navigator.serviceWorker.addEventListener("controllerchange", () => {
+          const reloadOnce = () => {
             if (reloaded) return;
             reloaded = true;
-            // Persist target version so next boot knows it's updated
             storeCurrent(meta);
+            // Keep it simple: on iOS PWAs this is the most reliable.
             location.reload();
-          });
+          };
+          navigator.serviceWorker.addEventListener("controllerchange", reloadOnce, { once: true });
+
+          // 2) Kick SW update.
+          await reg.update().catch(() => {});
+
+          // 3) Helper: tell the waiting worker to activate.
+          const tryActivateWaiting = () => {
+            if (!reg.waiting) return false;
+            try { reg.waiting.postMessage({ type: "PREFETCH_FULL" }); } catch (_) {}
+            try { reg.waiting.postMessage({ type: "SKIP_WAITING" }); } catch (_) {}
+            return true;
+          };
+
+          // If already waiting, activate immediately.
+          if (tryActivateWaiting()) return;
+
+          // 4) If an installing worker exists, wait until it becomes installed/waiting.
+          if (reg.installing) {
+            const installing = reg.installing;
+            await new Promise((resolve) => {
+              const onState = () => {
+                if (installing.state === 'installed' || installing.state === 'redundant') {
+                  try { installing.removeEventListener('statechange', onState); } catch (_) {}
+                  resolve(true);
+                }
+              };
+              installing.addEventListener('statechange', onState);
+              // In case it's already installed
+              onState();
+              // Safety timeout for quirky PWA engines
+              setTimeout(() => {
+                try { installing.removeEventListener('statechange', onState); } catch (_) {}
+                resolve(false);
+              }, 12000);
+            });
+            if (tryActivateWaiting()) return;
+          }
+
+          // 5) Fallback: if we didn't get controllerchange, force a reload.
+          setTimeout(() => {
+            if (!reloaded) location.reload();
+          }, 1500);
         }
       });
     }
 
     // Wait until the self-test is finished, then do update check
     try { await window.__bootReady; } catch (_) {}
+
+    // If maintenance mode is enabled, do not run the update prompt flow.
+    // Maintenance must take precedence and should apply immediately.
+    try {
+      if (document.body.classList.contains('is-maintenance')) return;
+      const mr = await fetch('manifest.json', { cache: 'no-store' });
+      const mm = await mr.json();
+      if (mm && mm.maintenance === true) return;
+    } catch (_) {}
 
     // 1) Wenn ein Worker schon "waiting" ist: Update anbieten
     const currentMeta = await fetchVersion();
