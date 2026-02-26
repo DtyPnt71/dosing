@@ -189,7 +189,7 @@
       { p: 30, t: "Approved",                    d: 420  },
       { p: 44, t: "Reading data…",               d: 900 },
       { p: 58, t: "Downloading update…",         d: 1600 },
-      { p: 74, t: "Applying update…",            d: 1000 },
+      { p: 74, t: "Applying update…",            d: 2200 },
       { p: 88, t: "Finalizing…",                 d: 1100 },
     ];
 
@@ -203,7 +203,7 @@
     // "Warten" etwas länger, aber nicht zu spammy.
     let spinCount = 0;
     while (p < 98) {
-      appendDetailLine(ui, "Waiting for activation…", "log");
+      appendDetailLine(ui, "Activate features…", "log");
       p += 2;
       setBootProgress(ui, p);
       spinCount += 1;
