@@ -1,7 +1,7 @@
 {
   "version": "v2.2.1",
-  "build": "Build:2026-02-23",
-  "added": ["robust update activation", "maintenance applies immediately"],
-  "fixed": ["update stuck on activation/restart", "manifest maintenance flag served stale"],
-  "removed": ["animations"]
+  "build": "Build:2026-03-31",
+  "added": ["update server", "skip update"],
+  "fixed": ["resolve error update server", "maintenance flag"],
+  "removed": ["nothing"]
 }
