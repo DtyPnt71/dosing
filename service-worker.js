@@ -3,9 +3,9 @@
 // - Offline nutzbar (Core-Shell ist gecached)
 // - Updates kontrolliert anbieten: neue Version wird erkannt, aber erst nach Bestätigung aktiviert
 
-// IMPORTANT: bump this when shipping changes so installed PWAs (Samsung Internet / Chrome) actually refresh caches.
-const APP_VERSION = 'v2.2.1';
-const CACHE_NAME = `dosing-cache-${APP_VERSION}`;
+// Static cache name: normal releases are versioned through version.json.
+// This way you only need to update version.json instead of editing multiple files.
+const CACHE_NAME = 'dosing-cache-core-v2';
 
 // Minimaler Offline-Shell (damit App immer startet)
 const CORE_URLS = [
@@ -111,7 +111,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Für Assets: Stale-while-revalidate
+
+  // Kritische App-Skripte immer bevorzugt aus dem Netz laden, damit neue
+  // HTML-Struktur und neues JS nicht gegeneinander laufen.
+  // Genau dieser Mismatch konnte dazu führen, dass neue Felder sichtbar waren,
+  // aber die zugehörige Logik/Event-Handler noch aus einer alten app.js kamen.
+  const isCriticalAsset = [
+    '/app.js',
+    '/styles.css',
+    '/style.css',
+    '/html2pdf.bundle.js',
+    '/creator-names.json',
+    '/materials.json'
+  ].some((suffix) => url.pathname.endsWith(suffix));
+
+  if (isCriticalAsset) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (req.method === 'GET' && res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Für sonstige Assets: Stale-while-revalidate
   event.respondWith(
     caches.match(req).then((cached) => {
       const networkFetch = fetch(req)

@@ -196,9 +196,10 @@
           </div>
           <div class="pdf-meta">
             <div><span class="pdf-label">Datum:        </span> <span id="pdfDate"></span></div>
-            <div><span class="pdf-label">Maschinen-Nr: </span> <span id="pdfMachine"></span></div>
             <div><span class="pdf-label">Materialsorte:</span> <span id="pdfFamily"></span></div>
+            <div><span class="pdf-label">Maschinen-Nr: </span> <span id="pdfMachine"></span></div>
             <div><span class="pdf-label">Materialtyp:  </span> <span id="pdfSpec"></span></div>
+            <div><span class="pdf-label" id="pdfCustomerLabel">Kunde:</span> <span id="pdfCustomer"></span></div>
             <div><span class="pdf-label">Dosierung:    </span> <span id="pdfDose"></span></div>
           </div>
           <div class="pdf-separator"></div>
@@ -211,6 +212,10 @@
             </thead>
             <tbody id="pdfProbes"></tbody>
           </table>
+          <div id="pdfMaterialChargeBlock" class="pdf-comment-block" style="display:none;">
+            <div class="pdf-label" id="pdfMaterialChargeTitle">Material-Charge</div>
+            <div id="pdfMaterialChargeValues" class="pdf-comment"></div>
+          </div>
           <div class="pdf-comment-block">
             <div class="pdf-label">Kommentar:</div>
             <div id="pdfComment" class="pdf-comment"></div>
@@ -234,6 +239,18 @@
             <input type="text" id="machineInput" class="modal-input" placeholder="z.B. 1221" autocomplete="off" />
             <label class="modal-label" for="machineDateInput">Datum</label>
             <input type="text" id="machineDateInput" class="modal-input" placeholder="TT.MM.JJJJ" autocomplete="off" />
+            <label class="modal-label" for="machineCustomerInput" id="machineCustomerLabel">Kunde</label>
+            <input type="text" id="machineCustomerInput" class="modal-input" placeholder="z.B. Musterkunde GmbH" autocomplete="off" />
+            <label class="modal-checkbox" for="materialChargeEnabled" style="display:flex; align-items:center; gap:0.5rem; margin-top:0.75rem;">
+              <input type="checkbox" id="materialChargeEnabled" />
+              <span id="materialChargeLabel">Material-Charge</span>
+            </label>
+            <div id="materialChargeFields" style="display:none;">
+              <label class="modal-label" for="materialChargeAInput" id="materialChargeALabel">1. A-Komponente</label>
+              <input type="text" id="materialChargeAInput" class="modal-input" placeholder="z.B. A12345" autocomplete="off" />
+              <label class="modal-label" for="materialChargeBInput" id="materialChargeBLabel">2. B-Komponente</label>
+              <input type="text" id="materialChargeBInput" class="modal-input" placeholder="z.B. B67890" autocomplete="off" />
+            </div>
             <label class="modal-label" for="machineCreatorSelect" id="machineCreatorLabel">Erstellt durch</label>
             <select id="machineCreatorSelect" class="modal-input" autocomplete="off">
               <option value="" selected disabled>Bitte wählen</option>
@@ -356,15 +373,25 @@
       </div>
 
       <footer id="appFooter" class="app-footer" aria-label="Footer">
-        <button class="footer-link" type="button" data-open-modal="impressumModal">Impressum</button>
-        <span class="footer-sep">·</span>
-        <button class="footer-link" type="button" data-open-modal="homepageModal">Homepage</button>
-        <span class="footer-sep">·</span>
-        <button class="footer-link" type="button" data-open-modal="helpModal">Hilfe</button>
-        <span class="footer-sep">·</span>
-        <button class="footer-link" type="button" data-open-modal="supportModal">Technischer Support</button>
-        <span class="footer-sep">·</span>
-        <button class="footer-link" type="button" data-open-modal="rightsModal">Rechte</button>
+        <div class="footer-main-links">
+          <button class="footer-link" type="button" data-open-modal="impressumModal">Impressum</button>
+          <span class="footer-sep">·</span>
+          <button class="footer-link" type="button" data-open-modal="homepageModal">Homepage</button>
+          <span class="footer-sep">·</span>
+          <button class="footer-link" type="button" data-open-modal="helpModal">Hilfe</button>
+          <span class="footer-sep">·</span>
+          <button class="footer-link" type="button" data-open-modal="supportModal">Technischer Support</button>
+          <span class="footer-sep">·</span>
+          <button class="footer-link" type="button" data-open-modal="rightsModal">Rechte</button>
+        </div>
+        <div class="footer-meta-row">
+          <button id="footerVersionBtn" class="footer-pill footer-version" type="button" data-open-modal="aboutModal" aria-label="Versionsinformationen öffnen">
+            Version <span id="footerVersion">–</span>
+          </button>
+          <div id="footerOfflineStatus" class="footer-pill footer-status is-online" role="status" aria-live="polite">
+            <span id="footerOfflineText"> ddasOnline</span>
+          </div>
+        </div>
       </footer>
 
       <!-- Footer Modals -->
@@ -471,7 +498,30 @@
           </div>
           <div class="modal-body">
             <p><strong>Dosierung</strong> berechnet den Anteil von B in Prozent relativ zu A und prüft – je nach Material – einen zulässigen Bereich.</p>
-            <p class="small">Version: <span id="aboutVersion">–</span></p>
+            <div class="about-meta-grid">
+              <div class="about-meta-item">
+                <div class="about-meta-label">Version</div>
+                <div class="about-meta-value" id="aboutVersion">–</div>
+              </div>
+              <div class="about-meta-item">
+                <div class="about-meta-label">Build</div>
+                <div class="about-meta-value" id="aboutBuild">–</div>
+              </div>
+            </div>
+            <div class="about-changelog">
+              <div class="about-changelog-section">
+                <div class="about-changelog-title">Hinzugefügt</div>
+                <ul id="aboutAddedList" class="about-changelog-list"></ul>
+              </div>
+              <div class="about-changelog-section">
+                <div class="about-changelog-title">Behoben</div>
+                <ul id="aboutFixedList" class="about-changelog-list"></ul>
+              </div>
+              <div class="about-changelog-section">
+                <div class="about-changelog-title">Entfernt</div>
+                <ul id="aboutRemovedList" class="about-changelog-list"></ul>
+              </div>
+            </div>
           </div>
           <div class="modal-actions">
             <button type="button" class="btn-primary" data-close-modal>Schließen</button>

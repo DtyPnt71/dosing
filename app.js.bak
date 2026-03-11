@@ -341,8 +341,9 @@
     } catch (_) {}
   });
 })();
-// App version is loaded dynamically from version.json.
-window.APP_VERSION = "";
+// App Version (muss zu version.json passen)
+// Must match version.json (used for update prompts in PWAs)
+window.APP_VERSION = "v2.2.1";
 
 window.EXPORT_EMAIL = "info@h-d-tec.de";
 // PIN for internal PDF export (change for your deployment)
@@ -416,8 +417,6 @@ const TRANSLATIONS = {
     tol_range_label: 'Bereich:',
     tol_target_label: 'Zielwert:',
     pdf_machine: 'Maschinen-Nr:',
-    pdf_customer: 'Kunde:',
-    pdf_material_charge: 'Material-Charge',
     pdf_family: 'Materialsorte:',
     pdf_spec: 'Materialtyp:',
     pdf_mean: 'Mittelwert:',
@@ -429,10 +428,6 @@ const TRANSLATIONS = {
     machine_modal_intro: 'Bitte Angaben für den Bericht eintragen:',
     machine_modal_label_machine: 'Maschinen-Nr',
     machine_modal_label_date: 'Datum',
-    machine_modal_label_customer: 'Kunde',
-    machine_modal_label_material_charge: 'Material-Charge',
-    machine_modal_label_material_charge_a: '1. A-Komponente',
-    machine_modal_label_material_charge_b: '2. B-Komponente',
     machine_modal_label_creator: 'Erstellt durch',
     machine_modal_info_title: 'Info:',
     machine_modal_info_text: 'Tipp: PDF zuerst erstellen, danach öffnen/teilen. E-Mail wird separat gesendet (Textbericht).',
@@ -450,9 +445,6 @@ const TRANSLATIONS = {
     material_modal_spec: 'Materialtyp',
     placeholder_machine_no: 'z.B. 1221',
     placeholder_machine_date: 'TT.MM.JJJJ',
-    placeholder_machine_customer: 'z.B. Musterkunde GmbH',
-    placeholder_material_charge_a: 'z.B. A12345',
-    placeholder_material_charge_b: 'z.B. B67890',
     placeholder_machine_creator: 'Name des Erstellers',
     creator_select_placeholder: 'Bitte wählen',
     creator_select_other: 'Andere …',
@@ -528,8 +520,6 @@ const TRANSLATIONS = {
     tol_range_label: 'Range:',
     tol_target_label: 'Target:',
     pdf_machine: 'Machine No.:',
-    pdf_customer: 'Customer:',
-    pdf_material_charge: 'Material batch',
     pdf_family: 'Material family:',
     pdf_spec: 'Material type:',
     pdf_mean: 'Mean value:',
@@ -541,10 +531,6 @@ const TRANSLATIONS = {
     machine_modal_intro: 'Please enter the details for the report:',
     machine_modal_label_machine: 'Machine No.',
     machine_modal_label_date: 'Date',
-    machine_modal_label_customer: 'Customer',
-    machine_modal_label_material_charge: 'Material batch',
-    machine_modal_label_material_charge_a: '1. A component',
-    machine_modal_label_material_charge_b: '2. B component',
     machine_modal_label_creator: 'Created by',
     machine_modal_info_title: 'Info:',
     machine_modal_info_text: 'Tip: First create the PDF, then open/share it. Email is sent separately (text report).',
@@ -562,9 +548,6 @@ const TRANSLATIONS = {
     material_modal_spec: 'Material type',
     placeholder_machine_no: 'e.g. 1221',
     placeholder_machine_date: 'DD.MM.YYYY',
-    placeholder_machine_customer: 'e.g. Sample Customer Ltd.',
-    placeholder_material_charge_a: 'e.g. A12345',
-    placeholder_material_charge_b: 'e.g. B67890',
     placeholder_machine_creator: 'Name of creator',
     creator_select_placeholder: 'Please select',
     creator_select_other: 'Other …',
@@ -869,16 +852,22 @@ function applyLanguage() {
       tolRange.firstChild.textContent = t('tol_range_label') + ' ';
     }
 
-    // PDF labels
+    // PDF-Labels: Reihenfolge im DOM beachten (im #pdfReport)
+    // .pdf-label Elemente:
+    // 0: Datum
+    // 1: Maschinen-Nr
+    // 2: Materialsorte
+    // 3: Materialtyp
+    // 4: Dosierung
+    // 5: Kommentar
+    // 6: Mittelwert
+    // 7: Erstellt durch
     const pdfLabels = document.querySelectorAll('#pdfReport .pdf-label');
-    if (pdfLabels[1]) pdfLabels[1].textContent = t('pdf_family');
-    if (pdfLabels[2]) pdfLabels[2].textContent = t('pdf_machine');
+    if (pdfLabels[1]) pdfLabels[1].textContent = t('pdf_machine');
+    if (pdfLabels[2]) pdfLabels[2].textContent = t('pdf_family');
     if (pdfLabels[3]) pdfLabels[3].textContent = t('pdf_spec');
-    if (pdfLabels[4]) pdfLabels[4].textContent = t('pdf_customer');
-    const pdfMaterialChargeTitle = document.getElementById('pdfMaterialChargeTitle');
-    if (pdfMaterialChargeTitle) pdfMaterialChargeTitle.textContent = t('pdf_material_charge');
-    if (pdfLabels[8]) pdfLabels[8].textContent = t('pdf_mean');
-    if (pdfLabels[9]) pdfLabels[9].textContent = t('pdf_creator');
+    if (pdfLabels[6]) pdfLabels[6].textContent = t('pdf_mean');
+    if (pdfLabels[7]) pdfLabels[7].textContent = t('pdf_creator');
 
     // Confirm button
     if (confirmBtn) {
@@ -911,18 +900,6 @@ function applyLanguage() {
       const dateLabel = machineModalEl.querySelector('label[for="machineDateInput"]');
       if (dateLabel) dateLabel.textContent = t('machine_modal_label_date');
 
-      const customerLabel = machineModalEl.querySelector('label[for="machineCustomerInput"]');
-      if (customerLabel) customerLabel.textContent = t('machine_modal_label_customer');
-
-      const materialChargeLabel = document.getElementById('materialChargeLabel');
-      if (materialChargeLabel) materialChargeLabel.textContent = t('machine_modal_label_material_charge');
-
-      const materialChargeALabel = document.querySelector('label[for="materialChargeAInput"]');
-      if (materialChargeALabel) materialChargeALabel.textContent = t('machine_modal_label_material_charge_a');
-
-      const materialChargeBLabel = document.querySelector('label[for="materialChargeBInput"]');
-      if (materialChargeBLabel) materialChargeBLabel.textContent = t('machine_modal_label_material_charge_b');
-
       const creatorLabel = machineModalEl.querySelector('label[for="machineCreatorSelect"]');
       if (creatorLabel) creatorLabel.textContent = t('machine_modal_label_creator');
 
@@ -931,15 +908,6 @@ function applyLanguage() {
 
       const machineDateInputEl = document.getElementById('machineDateInput');
       if (machineDateInputEl) machineDateInputEl.setAttribute('placeholder', t('placeholder_machine_date'));
-
-      const machineCustomerInputEl = document.getElementById('machineCustomerInput');
-      if (machineCustomerInputEl) machineCustomerInputEl.setAttribute('placeholder', t('placeholder_machine_customer'));
-
-      const materialChargeAInputEl = document.getElementById('materialChargeAInput');
-      if (materialChargeAInputEl) materialChargeAInputEl.setAttribute('placeholder', t('placeholder_material_charge_a'));
-
-      const materialChargeBInputEl = document.getElementById('materialChargeBInput');
-      if (materialChargeBInputEl) materialChargeBInputEl.setAttribute('placeholder', t('placeholder_material_charge_b'));
 
       const machineCreatorSelectEl = document.getElementById('machineCreatorSelect');
       const machineCreatorOtherEl = document.getElementById('machineCreatorOtherInput');
@@ -1107,20 +1075,7 @@ function getExportInputsFromModal() {
   const reportDate = machineDateInput ? machineDateInput.value.trim() : formatToday();
   const creatorName = getCreatorNameForExport();
   const exportComment = machineCommentInput ? String(machineCommentInput.value || '').trim() : '';
-  const customerName = machineCustomerInput ? String(machineCustomerInput.value || '').trim() : '';
-  const materialChargeEnabledValue = !!(materialChargeEnabled && materialChargeEnabled.checked);
-  const materialChargeAValue = materialChargeAInput ? String(materialChargeAInput.value || '').trim() : '';
-  const materialChargeBValue = materialChargeBInput ? String(materialChargeBInput.value || '').trim() : '';
-  return {
-    machineNo,
-    reportDate,
-    creatorName,
-    exportComment,
-    customerName,
-    materialChargeEnabled: materialChargeEnabledValue,
-    materialChargeA: materialChargeAValue,
-    materialChargeB: materialChargeBValue
-  };
+  return { machineNo, reportDate, creatorName, exportComment };
 }
 
 function getExportContextTexts() {
@@ -1151,11 +1106,6 @@ function getExportContextTexts() {
 const machineModal = document.getElementById("machineModal");
 const machineInput = document.getElementById("machineInput");
 const machineDateInput = document.getElementById("machineDateInput");
-const machineCustomerInput = document.getElementById("machineCustomerInput");
-const materialChargeEnabled = document.getElementById("materialChargeEnabled");
-const materialChargeFields = document.getElementById("materialChargeFields");
-const materialChargeAInput = document.getElementById("materialChargeAInput");
-const materialChargeBInput = document.getElementById("materialChargeBInput");
 const machineCreatorSelect = document.getElementById("machineCreatorSelect");
 const machineCreatorOtherInput = document.getElementById("machineCreatorOtherInput");
 const machineCommentInput = document.getElementById("machineCommentInput");
@@ -1177,14 +1127,6 @@ function setCreatorOtherVisible(visible) {
   if (!machineCreatorOtherInput) return;
   machineCreatorOtherInput.style.display = visible ? '' : 'none';
   if (!visible) machineCreatorOtherInput.value = '';
-}
-
-function setMaterialChargeVisible(visible) {
-  if (materialChargeFields) materialChargeFields.style.display = visible ? '' : 'none';
-  if (!visible) {
-    if (materialChargeAInput) materialChargeAInput.value = '';
-    if (materialChargeBInput) materialChargeBInput.value = '';
-  }
 }
 
 function getCreatorNameForExport() {
@@ -1248,18 +1190,8 @@ if (machineCreatorSelect) {
   });
 }
 
-if (materialChargeEnabled) {
-  materialChargeEnabled.addEventListener('change', () => {
-    setMaterialChargeVisible(!!materialChargeEnabled.checked);
-    if (materialChargeEnabled.checked) {
-      setTimeout(() => materialChargeAInput?.focus(), 0);
-    }
-  });
-}
-
 // Fire once on load
 loadCreatorNames();
-setMaterialChargeVisible(!!(materialChargeEnabled && materialChargeEnabled.checked));
 
 // Export auth modal (internal function)
 const exportAuthModal = document.getElementById('exportAuthModal');
@@ -1323,13 +1255,9 @@ function openMachineModal() {
       const reportDate = formatToday();
       const creatorName = '';
       const exportComment = '';
-      const customerName = '';
-      const materialChargeEnabled = false;
-      const materialChargeA = '';
-      const materialChargeB = '';
       const toastId = showToast(t('toast_exporting'), { type: 'neutral', sticky: true });
       const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
-      generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment, customerName, materialChargeEnabled, materialChargeA, materialChargeB)
+      generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment)
         .then((blob) => {
           updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
           const url = URL.createObjectURL(blob);
@@ -1355,13 +1283,6 @@ function openMachineModal() {
   if (machineDateInput) {
     machineDateInput.value = formatToday();
   }
-  if (machineCustomerInput) {
-    machineCustomerInput.value = '';
-  }
-  if (materialChargeEnabled) {
-    materialChargeEnabled.checked = false;
-  }
-  setMaterialChargeVisible(false);
   if (machineCreatorSelect) {
     // reset selection
     machineCreatorSelect.value = '';
@@ -1411,9 +1332,9 @@ function buildReport(machineNo, reportDate, famText, specText, tolText, meanText
   lines.push("Datum: " + (reportDate || "-"));
   lines.push("");
   lines.push("-----");
+  lines.push("Maschinen-Nr 	: " + (machineNo || "-"));
   lines.push("Materialsorte	: " + (famText || "-"));
   lines.push("Materialtyp 	: " + (specText || "-"));
-  lines.push("Maschinen-Nr 	: " + (machineNo || "-"));
   lines.push("Dosierung    	: " + (tolText || "-"));
   lines.push("");
   lines.push("Probe   Ergebnis (%)");
@@ -1445,41 +1366,12 @@ function isIOS() {
   }
 }
 
-function isAndroid() {
-  try {
-    return /android/i.test(navigator.userAgent || '');
-  } catch (e) {
-    return false;
-  }
-}
-
-function isSamsungInternet() {
-  try {
-    return /samsungbrowser/i.test(navigator.userAgent || '');
-  } catch (e) {
-    return false;
-  }
-}
-
 function isStandalone() {
   try {
     // iOS Safari (installed) uses navigator.standalone
     if (window.navigator && window.navigator.standalone) return true;
     // Modern browsers / Android PWAs
     return window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-  } catch (e) {
-    return false;
-  }
-}
-
-function canUseSaveFilePicker() {
-  try {
-    if (typeof window.showSaveFilePicker !== 'function') return false;
-    // Samsung Internet / Android PWAs have shown flaky behaviour here
-    // (save dialog works, but resulting file may be 0 bytes).
-    // Use the classic blob download flow there instead.
-    if (isAndroid() || isSamsungInternet()) return false;
-    return true;
   } catch (e) {
     return false;
   }
@@ -1502,12 +1394,12 @@ function openPdfInViewer(url) {
 function downloadPdf(url, filename) {
   // NOTE:
   // - iOS Safari (incl. installed PWA) does not reliably support `a[download]` for blob: URLs.
-  // - Android PWAs often still download blob URLs correctly, so do not block that path.
-  // - If the download is blocked, we fall back to opening the viewer.
+  // - Some Android PWAs also block programmatic downloads.
+  // So we keep a best-effort download for regular browsers and fall back to opening the PDF.
   try {
-    if (isIOS()) {
+    if (isIOS() || isStandalone()) {
       openPdfInViewer(url);
-      return false;
+      return;
     }
 
     const a = document.createElement('a');
@@ -1519,11 +1411,9 @@ function downloadPdf(url, filename) {
     // Some browsers behave better with a real click event.
     a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
     a.remove();
-    return true;
   } catch (e) {
     // Fallback: open in viewer
     openPdfInViewer(url);
-    return false;
   }
 }
 
@@ -1539,7 +1429,7 @@ async function trySharePdf(blob, filename) {
   }
 }
 
-function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment, customerName, materialChargeEnabledValue, materialChargeAValue, materialChargeBValue) {
+function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment) {
   const root = document.getElementById("pdfReport");
   if (!root || typeof window.html2pdf === "undefined") {
     return Promise.reject(new Error('PDF template (#pdfReport) or html2pdf is missing'));
@@ -1555,31 +1445,12 @@ function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, mean
   // Kopfbereich
   setText("pdfDate", reportDate || "");
   setText("pdfMachine", machineNo || "");
-  setText("pdfCustomer", customerName || "");
   setText("pdfFamily", famText || "");
   setText("pdfSpec", specText || "");
   setText("pdfDose", tolText || "");
   setText("pdfMean", meanText || "");
   setText("pdfCreator", creatorName || "");
   setText("pdfComment", (exportComment || "").trim());
-
-  const pdfCustomerRow = document.getElementById('pdfCustomer')?.parentElement || null;
-  if (pdfCustomerRow) pdfCustomerRow.style.display = customerName ? '' : 'none';
-
-  const pdfMaterialChargeBlock = document.getElementById('pdfMaterialChargeBlock');
-  const pdfMaterialChargeValues = document.getElementById('pdfMaterialChargeValues');
-  const chargeLines = [];
-  if (materialChargeEnabledValue && materialChargeAValue) chargeLines.push(t('machine_modal_label_material_charge_a').replace(/^\d+\.\s*/, '') + ': ' + materialChargeAValue);
-  if (materialChargeEnabledValue && materialChargeBValue) chargeLines.push(t('machine_modal_label_material_charge_b').replace(/^\d+\.\s*/, '') + ': ' + materialChargeBValue);
-  if (pdfMaterialChargeValues) {
-    pdfMaterialChargeValues.innerHTML = '';
-    chargeLines.forEach((line) => {
-      const row = document.createElement('div');
-      row.textContent = line;
-      pdfMaterialChargeValues.appendChild(row);
-    });
-  }
-  if (pdfMaterialChargeBlock) pdfMaterialChargeBlock.style.display = chargeLines.length ? '' : 'none';
 
   // Probentabelle
   const tbody = document.getElementById("pdfProbes");
@@ -1632,30 +1503,25 @@ function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, mean
   const pdfPromise = Promise.resolve()
     .then(() => new Promise((r) => requestAnimationFrame(r)))
     .then(() => {
-      const renderScale = Math.max(3, Math.min(4, (window.devicePixelRatio || 2) * 1.6));
       const worker = window.html2pdf()
         .from(clone)
         .set({
-          margin: [8, 8, 10, 8],
+          margin: 10,
           filename: filename,
-          image: { type: 'png', quality: 1 },
+          image: { type: "jpeg", quality: 0.98 },
           html2canvas: {
-            scale: renderScale,
+            // Lower scale reduces memory pressure (common cause of sporadic failures on tablets)
+            scale: 1.5,
             useCORS: true,
-            scrollY: 0,
-            backgroundColor: '#ffffff',
-            letterRendering: true
+            scrollY: 0
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false, floatPrecision: 16 }
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
         })
         .toPdf();
 
       return worker.outputPdf("blob");   // Blob erzeugen
     })
     .then((blob) => {
-      if (!(blob instanceof Blob) || blob.size === 0) {
-        throw new Error('Generated PDF blob is empty');
-      }
       // Restore scroll and cleanup before returning the blob.
       window.scrollTo(prevScrollX, prevScrollY);
       cleanup();
@@ -1676,7 +1542,7 @@ function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, mean
 
 
 // Export-Logik in eigene Funktion ausgelagert
-function performExport(machineNo, reportDate, creatorName, exportComment, customerName, materialChargeEnabledValue, materialChargeAValue, materialChargeBValue) {
+function performExport(machineNo, reportDate, creatorName, exportComment) {
   // Materialsorte & -typ
   const famEl = materialFamily;
   const specEl = materialSpec;
@@ -1707,7 +1573,7 @@ function performExport(machineNo, reportDate, creatorName, exportComment, custom
   const toastId = showToast(t('toast_exporting'), { type: 'neutral', sticky: true });
   const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
   Promise.resolve()
-    .then(() => generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment, customerName, materialChargeEnabledValue, materialChargeAValue, materialChargeBValue))
+    .then(() => generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment))
     .then((blob) => {
       updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
       const url = URL.createObjectURL(blob);
@@ -1795,13 +1661,13 @@ if (machinePdfAction) {
       return;
     }
 
-    const { machineNo, reportDate, creatorName, exportComment, customerName, materialChargeEnabled: materialChargeEnabledValue, materialChargeA: materialChargeAValue, materialChargeB: materialChargeBValue } = getExportInputsFromModal();
+    const { machineNo, reportDate, creatorName, exportComment } = getExportInputsFromModal();
     const { famText, specText, tolText, meanText } = getExportContextTexts();
     const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
 
     // In PWAs, programmatic downloads can be blocked. Prefer a real "Save as…" flow when supported.
     let saveHandle = null;
-    if (canUseSaveFilePicker()) {
+    if (typeof window.showSaveFilePicker === 'function') {
       try {
         saveHandle = await window.showSaveFilePicker({
           suggestedName: filename,
@@ -1815,10 +1681,19 @@ if (machinePdfAction) {
       }
     }
 
-    // Do not pre-open a viewer window in standalone/PWA mode.
-    // On Android/Samsung Internet this can trigger an additional system/file-manager
-    // save flow that creates a 0-byte file before the real blob download starts.
-    // We therefore keep the export to exactly one save/download path here.
+    // As an additional fallback (especially for Samsung/Android PWAs), open a preview window/tab synchronously.
+    let preOpenedWindow = null;
+    if (!saveHandle && isStandalone()) {
+      try {
+        preOpenedWindow = window.open('', '_blank');
+        if (preOpenedWindow && preOpenedWindow.document) {
+          preOpenedWindow.document.write('<!doctype html><title>PDF wird erstellt…</title><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font-family:system-ui;padding:16px"><h3>PDF wird erstellt…</h3><p>Bitte einen Moment warten.</p></body>');
+          preOpenedWindow.document.close();
+        }
+      } catch (e) {
+        preOpenedWindow = null;
+      }
+    }
 
     if (machinePdfAction) machinePdfAction.disabled = true;
     setMachineExportStatus(t('export_status_creating'), 'neutral');
@@ -1833,35 +1708,23 @@ if (machinePdfAction) {
         tolText,
         meanText,
         creatorName,
-        exportComment,
-        customerName,
-        materialChargeEnabledValue,
-        materialChargeAValue,
-        materialChargeBValue
+        exportComment
       );
 
-      // 1) If we have a save handle, try to write the file directly.
-      // Some Android PWAs / Samsung Internet builds expose showSaveFilePicker()
-      // but still fail later on createWritable()/write()/close(). In that case we
-      // must NOT abort the whole export because the PDF blob is already ready.
+      // 1) If we have a save handle, write the file directly (most reliable in PWAs).
       if (saveHandle) {
-        try {
-          const writable = await saveHandle.createWritable();
-          await writable.write(blob);
-          await writable.close();
+        const writable = await saveHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
 
-          const url = URL.createObjectURL(blob);
-          resetLastExportPdf();
-          LAST_EXPORT_PDF = { blob, url, filename };
+        const url = URL.createObjectURL(blob);
+        resetLastExportPdf();
+        LAST_EXPORT_PDF = { blob, url, filename };
 
-          updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
-          setMachineExportStatus(t('export_status_ready'), 'ok');
-          if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_open');
-          return;
-        } catch (writeErr) {
-          console.warn('Direct file write failed after showSaveFilePicker(), falling back to viewer/download:', writeErr);
-          saveHandle = null;
-        }
+        updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
+        setMachineExportStatus(t('export_status_ready'), 'ok');
+        if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_open');
+        return;
       }
 
       // 2) Otherwise: create an object URL and trigger download/open.
@@ -1869,23 +1732,20 @@ if (machinePdfAction) {
       resetLastExportPdf();
       LAST_EXPORT_PDF = { blob, url, filename };
 
-      // Trigger exactly one export path.
-      // On Android/Samsung Internet PWA the classic blob download is the only path that
-      // reliably produces a valid file. Automatically opening a viewer afterwards can
-      // spawn a second save dialog and create a broken 0-byte file.
-      let downloadTriggered = false;
+      // Try to download immediately (requirement). In standalone PWAs this can be blocked; we also open the viewer as fallback.
       try {
-        downloadTriggered = downloadPdf(url, filename);
+        downloadPdf(url, filename);
       } catch (e) {
         console.warn('downloadPdf failed:', e);
       }
 
-      // Only fall back to a viewer outside Android standalone mode.
-      // Android standalone/PWA should stay on the working download flow only.
-      if (isStandalone() && !isAndroid() && !downloadTriggered) {
-        setTimeout(() => {
+      if (isStandalone()) {
+        // Ensure the user sees the PDF even if the download is blocked.
+        if (preOpenedWindow) {
+          try { preOpenedWindow.location.href = url; } catch (e) { /* ignore */ }
+        } else {
           openPdfInViewer(url);
-        }, 250);
+        }
       }
 
       updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
@@ -2148,9 +2008,8 @@ if ("serviceWorker" in navigator) {
   (async () => {
     const reg = await navigator.serviceWorker.register("./service-worker.js");
 
-    const VER_KEY = "hdt_installed_version";
-    const BUILD_KEY = "hdt_installed_build";
-    const ACK_KEY = "hdt_acknowledged_version";
+    const VER_KEY = "hdt_app_version";
+    const BUILD_KEY = "hdt_app_build";
 
     async function fetchVersion() {
       try {
@@ -2175,33 +2034,9 @@ if ("serviceWorker" in navigator) {
     function storeCurrent(meta) {
       try {
         if (!meta) return;
-        if (meta.version) {
-          const version = String(meta.version);
-          localStorage.setItem(VER_KEY, version);
-          localStorage.setItem(ACK_KEY, version);
-          window.APP_VERSION = version;
-        }
+        if (meta.version) localStorage.setItem(VER_KEY, String(meta.version));
         if (meta.build) localStorage.setItem(BUILD_KEY, String(meta.build));
       } catch (_) {}
-    }
-
-    function markAcknowledged(meta) {
-      try {
-        if (!meta?.version) return;
-        localStorage.setItem(ACK_KEY, String(meta.version));
-      } catch (_) {}
-    }
-
-    function shouldPromptForVersion(meta) {
-      try {
-        const nextVersion = String(meta?.version || "").trim();
-        if (!nextVersion) return false;
-        const installedVersion = String(localStorage.getItem(VER_KEY) || "").trim();
-        const acknowledgedVersion = String(localStorage.getItem(ACK_KEY) || "").trim();
-        return nextVersion !== installedVersion && nextVersion !== acknowledgedVersion;
-      } catch (_) {
-        return !!String(meta?.version || "").trim();
-      }
     }
 
     function promptUpdate(meta) {
@@ -2215,10 +2050,9 @@ if ("serviceWorker" in navigator) {
         removed: meta?.removed,
         changes: meta?.changes,
         onLater: () => {
-          markAcknowledged(meta);
+          // nothing; user stays on current version
         },
         onUpdate: async () => {
-          storeCurrent(meta);
           // Robust, device-agnostic SW activation:
           // - Chrome/Firefox (Windows)
           // - Samsung Internet PWA
@@ -2293,12 +2127,7 @@ if ("serviceWorker" in navigator) {
 
     // 1) Wenn ein Worker schon "waiting" ist: Update anbieten
     const currentMeta = await fetchVersion();
-    if (currentMeta) {
-      applyVersionMeta(currentMeta);
-    }
-
-    // 1) Wenn ein Worker schon "waiting" ist: Update anbieten
-    if (reg.waiting && shouldPromptForVersion(currentMeta)) {
+    if (reg.waiting) {
       promptUpdate(currentMeta);
     }
 
@@ -2310,7 +2139,7 @@ if ("serviceWorker" in navigator) {
       // Beim allerersten Start: Version merken, nicht direkt "Update" anbieten
       if (!storedVer) {
         storeCurrent(currentMeta);
-      } else if (shouldPromptForVersion(currentMeta)) {
+      } else if (storedVer !== String(currentMeta.version)) {
         promptUpdate(currentMeta);
       }
     }
@@ -2322,9 +2151,7 @@ if ("serviceWorker" in navigator) {
       nw.addEventListener("statechange", async () => {
         if (nw.state === "installed" && navigator.serviceWorker.controller) {
           const meta = await fetchVersion();
-          if (shouldPromptForVersion(meta)) {
-            promptUpdate(meta);
-          }
+          promptUpdate(meta);
         }
       });
     });
@@ -2925,74 +2752,22 @@ document.querySelectorAll('.select').forEach((wrapper) => {
   });
 });
 
-// --- App Version automatisch aus version.json laden ---
-function renderAboutList(targetId, items) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  const values = Array.isArray(items)
-    ? items.map((item) => String(item || '').trim()).filter(Boolean)
-    : [];
-  el.innerHTML = '';
-  if (!values.length) {
-    el.classList.add('is-empty');
-    const li = document.createElement('li');
-    li.textContent = '–';
-    el.appendChild(li);
-    return;
-  }
-  el.classList.remove('is-empty');
-  values.forEach((value) => {
-    const li = document.createElement('li');
-    li.textContent = value;
-    el.appendChild(li);
-  });
-}
-
-function applyVersionMeta(meta) {
-  const version = String(meta?.version || '').trim() || '–';
-  const build = String(meta?.build || '').trim() || '–';
-  window.APP_VERSION = version;
-  const aboutVersion = document.getElementById('aboutVersion');
-  if (aboutVersion) aboutVersion.textContent = version;
-  const footerVersion = document.getElementById('footerVersion');
-  if (footerVersion) footerVersion.textContent = version;
-  const aboutBuild = document.getElementById('aboutBuild');
-  if (aboutBuild) aboutBuild.textContent = build;
-  renderAboutList('aboutAddedList', meta?.added);
-  renderAboutList('aboutFixedList', meta?.fixed);
-  renderAboutList('aboutRemovedList', meta?.removed);
-}
-
+// --- App Version automatisch laden ---
 async function loadAppVersion() {
   try {
-    const res = await fetch('./version.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`version.json HTTP ${res.status}`);
-    const meta = await res.json();
-    applyVersionMeta(meta);
+    const res = await fetch('manifest.json');
+    const manifest = await res.json();
+    const version = manifest.version || "–";
+    const about = document.getElementById("aboutVersion");
+    if (about) {
+      about.textContent = version;
+    }
   } catch (e) {
-    console.error('Version konnte nicht geladen werden:', e);
-    applyVersionMeta({});
+    console.error("Version konnte nicht geladen werden:", e);
   }
 }
 
-function updateOfflineStatus() {
-  const statusEl = document.getElementById('footerOfflineStatus');
-  const textEl = document.getElementById('footerOfflineText');
-  if (!statusEl || !textEl) return;
-  const isOnlineNow = navigator.onLine !== false;
-  statusEl.classList.toggle('is-online', isOnlineNow);
-  statusEl.classList.toggle('is-offline', !isOnlineNow);
-  textEl.textContent = isOnlineNow
-    ? '🟢 Online'
-    : '🔴 Offline (Berichte können trotzdem erstellt werden)';
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  loadAppVersion();
-  updateOfflineStatus();
-  window.addEventListener('online', updateOfflineStatus);
-  window.addEventListener('offline', updateOfflineStatus);
-});
+document.addEventListener("DOMContentLoaded", loadAppVersion);
 // --- Ende Versionscode ---
 
 
