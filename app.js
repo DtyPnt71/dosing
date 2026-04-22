@@ -435,15 +435,15 @@ const TRANSLATIONS = {
     machine_modal_label_material_charge_b: '2. B-Komponente',
     machine_modal_label_creator: 'Erstellt durch',
     machine_modal_info_title: 'Info:',
-    machine_modal_info_text: 'Tipp: PDF zuerst erstellen, danach öffnen/teilen. E-Mail wird separat gesendet (Textbericht).',
+    machine_modal_info_text: 'Nach dem Erstellen wird der PDF-Download direkt gestartet. E-Mail wird separat gesendet (Textbericht).',
     btn_cancel: 'Abbrechen',
     btn_pdf_create: 'PDF erstellen',
-    btn_pdf_open: 'PDF öffnen',
+    btn_pdf_open: 'PDF erstellen',
     btn_email_send: 'E-Mail senden',
     export_status_creating: 'PDF wird erstellt …',
-    export_status_ready: 'PDF ist bereit.',
+    export_status_ready: 'PDF erstellt. Download wurde ausgelöst.',
     export_status_failed: 'PDF konnte nicht erstellt werden.',
-    export_status_hint: 'Hinweis: In PWAs wird das PDF im Viewer geöffnet oder per „Teilen“ weitergegeben.',
+    export_status_hint: 'Hinweis: Der PDF-Download startet direkt nach der Erstellung.',
     material_modal_title: 'Material hinzufügen',
     material_modal_intro: 'Bitte die Daten für das neue Material eintragen:',
     material_modal_family: 'Materialsorte',
@@ -547,15 +547,15 @@ const TRANSLATIONS = {
     machine_modal_label_material_charge_b: '2. B component',
     machine_modal_label_creator: 'Created by',
     machine_modal_info_title: 'Info:',
-    machine_modal_info_text: 'Tip: First create the PDF, then open/share it. Email is sent separately (text report).',
+    machine_modal_info_text: 'After creation, the PDF download starts directly. Email is sent separately (text report).',
     btn_cancel: 'Cancel',
     btn_pdf_create: 'Create PDF',
-    btn_pdf_open: 'Open PDF',
+    btn_pdf_open: 'Create PDF',
     btn_email_send: 'Send email',
     export_status_creating: 'Creating PDF …',
-    export_status_ready: 'PDF is ready.',
+    export_status_ready: 'PDF created. Download was triggered.',
     export_status_failed: 'Could not create PDF.',
-    export_status_hint: 'Note: In installed PWAs the PDF opens in a viewer or can be shared.',
+    export_status_hint: 'Note: The PDF download starts directly after creation.',
     material_modal_title: 'Add material',
     material_modal_intro: 'Please enter the data for the new material:',
     material_modal_family: 'Material family',
@@ -1078,7 +1078,7 @@ function updateExportButtonState() {
   exportMenuItem.disabled = results.length === 0;
 }
 
-// --- Export UX state (PDF is created first, then opened/shared on explicit user action) ---
+// --- Export UX state (cleanup for the last generated object URL) ---
 let LAST_EXPORT_PDF = { blob: null, url: null, filename: null };
 
 function resetLastExportPdf() {
@@ -1088,6 +1088,21 @@ function resetLastExportPdf() {
     }
   } catch (e) {}
   LAST_EXPORT_PDF = { blob: null, url: null, filename: null };
+}
+
+
+function trackLastExportUrl(url, filename) {
+  resetLastExportPdf();
+  LAST_EXPORT_PDF = { blob: null, url, filename };
+  setTimeout(() => {
+    try {
+      if (LAST_EXPORT_PDF && LAST_EXPORT_PDF.url === url) {
+        resetLastExportPdf();
+      } else {
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {}
+  }, 120000);
 }
 
 function setMachineExportStatus(message, type = 'neutral') {
@@ -1316,7 +1331,7 @@ function formatToday() {
 function openMachineModal() {
   if (!machineModal) {
     // Falls kein Modal vorhanden, direkt exportieren
-    // Fallback: create PDF blob and open in viewer
+    // Fallback: create PDF blob and trigger direct download
     try {
       const { famText, specText, tolText, meanText } = getExportContextTexts();
       const machineNo = '';
@@ -1333,8 +1348,8 @@ function openMachineModal() {
         .then((blob) => {
           updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
           const url = URL.createObjectURL(blob);
-          openPdfInViewer(url);
-          setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 60000);
+          trackLastExportUrl(url, filename);
+          downloadPdf(url, filename);
         })
         .catch(() => updateToast(toastId, t('export_status_failed'), { type: 'danger', done: true }));
     } catch (e) {}
@@ -1437,102 +1452,22 @@ function buildReport(machineNo, reportDate, famText, specText, tolText, meanText
 }
 
 
-function isIOS() {
-  try {
-    return /iphone|ipad|ipod/i.test(navigator.userAgent || '');
-  } catch (e) {
-    return false;
-  }
-}
-
-function isAndroid() {
-  try {
-    return /android/i.test(navigator.userAgent || '');
-  } catch (e) {
-    return false;
-  }
-}
-
-function isSamsungInternet() {
-  try {
-    return /samsungbrowser/i.test(navigator.userAgent || '');
-  } catch (e) {
-    return false;
-  }
-}
-
-function isStandalone() {
-  try {
-    // iOS Safari (installed) uses navigator.standalone
-    if (window.navigator && window.navigator.standalone) return true;
-    // Modern browsers / Android PWAs
-    return window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
-  } catch (e) {
-    return false;
-  }
-}
-
-function canUseSaveFilePicker() {
-  try {
-    if (typeof window.showSaveFilePicker !== 'function') return false;
-    // Samsung Internet / Android PWAs have shown flaky behaviour here
-    // (save dialog works, but resulting file may be 0 bytes).
-    // Use the classic blob download flow there instead.
-    if (isAndroid() || isSamsungInternet()) return false;
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-function openPdfInViewer(url) {
-  // In PWAs, programmatic downloads are often blocked; opening a viewer is more reliable.
-  // Keep this function synchronous (user-gesture) when called.
-  try {
-    const w = window.open(url, '_blank');
-    if (!w) {
-      // Fallback if popups are blocked
-      window.location.href = url;
-    }
-  } catch (e) {
-    try { window.location.href = url; } catch (e2) {}
-  }
-}
-
 function downloadPdf(url, filename) {
-  // NOTE:
-  // - iOS Safari (incl. installed PWA) does not reliably support `a[download]` for blob: URLs.
-  // - Android PWAs often still download blob URLs correctly, so do not block that path.
-  // - If the download is blocked, we fall back to opening the viewer.
   try {
-    if (isIOS()) {
-      openPdfInViewer(url);
-      return false;
-    }
-
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     a.style.display = 'none';
     a.rel = 'noopener';
     document.body.appendChild(a);
-    // Some browsers behave better with a real click event.
-    a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-    a.remove();
-    return true;
-  } catch (e) {
-    // Fallback: open in viewer
-    openPdfInViewer(url);
-    return false;
-  }
-}
-
-async function trySharePdf(blob, filename) {
-  try {
-    if (!navigator || typeof navigator.share !== 'function') return false;
-    const file = new File([blob], filename, { type: 'application/pdf' });
-    if (navigator.canShare && !navigator.canShare({ files: [file] })) return false;
-    await navigator.share({ files: [file], title: filename });
+    try {
+      a.click();
+    } catch (clickErr) {
+      a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    }
+    setTimeout(() => {
+      try { a.remove(); } catch (e) {}
+    }, 1000);
     return true;
   } catch (e) {
     return false;
@@ -1711,10 +1646,8 @@ function performExport(machineNo, reportDate, creatorName, exportComment, custom
     .then((blob) => {
       updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
       const url = URL.createObjectURL(blob);
-      // Prefer downloads in regular browser mode; in installed PWAs a viewer is typically more reliable.
-      if (isStandalone()) openPdfInViewer(url);
-      else downloadPdf(url, filename);
-      setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 60000);
+      downloadPdf(url, filename);
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch(e) {} }, 120000);
     })
     .catch((e) => {
       console.error("PDF-Export fehlgeschlagen:", e);
@@ -1780,45 +1713,13 @@ if (machineCancel) {
 
 // Do NOT close the report modal when clicking the backdrop.
 // Reason: on touch devices users often tap next to the dialog by accident (especially while scrolling),
-// which would discard the form state and interrupt the PDF download/share flow.
+// which would discard the form state and interrupt the PDF download flow.
 
 if (machinePdfAction) {
   machinePdfAction.addEventListener('click', async () => {
-    // If a PDF is already prepared, allow the user to open/download it again.
-    if (LAST_EXPORT_PDF && LAST_EXPORT_PDF.blob && LAST_EXPORT_PDF.url && LAST_EXPORT_PDF.filename) {
-      const shared = await trySharePdf(LAST_EXPORT_PDF.blob, LAST_EXPORT_PDF.filename);
-      if (!shared) {
-        // Best effort: download in browser, open in viewer in standalone.
-        if (isStandalone()) openPdfInViewer(LAST_EXPORT_PDF.url);
-        else downloadPdf(LAST_EXPORT_PDF.url, LAST_EXPORT_PDF.filename);
-      }
-      return;
-    }
-
     const { machineNo, reportDate, creatorName, exportComment, customerName, materialChargeEnabled: materialChargeEnabledValue, materialChargeA: materialChargeAValue, materialChargeB: materialChargeBValue } = getExportInputsFromModal();
     const { famText, specText, tolText, meanText } = getExportContextTexts();
     const filename = "Mischungsverhaeltnis_" + (machineNo || "Bericht") + ".pdf";
-
-    // In PWAs, programmatic downloads can be blocked. Prefer a real "Save as…" flow when supported.
-    let saveHandle = null;
-    if (canUseSaveFilePicker()) {
-      try {
-        saveHandle = await window.showSaveFilePicker({
-          suggestedName: filename,
-          types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }]
-        });
-      } catch (e) {
-        // User cancelled the save dialog -> abort without errors.
-        if (e && (e.name === 'AbortError' || e.name === 'NotAllowedError')) return;
-        console.warn('showSaveFilePicker failed, falling back:', e);
-        saveHandle = null;
-      }
-    }
-
-    // Do not pre-open a viewer window in standalone/PWA mode.
-    // On Android/Samsung Internet this can trigger an additional system/file-manager
-    // save flow that creates a 0-byte file before the real blob download starts.
-    // We therefore keep the export to exactly one save/download path here.
 
     if (machinePdfAction) machinePdfAction.disabled = true;
     setMachineExportStatus(t('export_status_creating'), 'neutral');
@@ -1840,57 +1741,16 @@ if (machinePdfAction) {
         materialChargeBValue
       );
 
-      // 1) If we have a save handle, try to write the file directly.
-      // Some Android PWAs / Samsung Internet builds expose showSaveFilePicker()
-      // but still fail later on createWritable()/write()/close(). In that case we
-      // must NOT abort the whole export because the PDF blob is already ready.
-      if (saveHandle) {
-        try {
-          const writable = await saveHandle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-
-          const url = URL.createObjectURL(blob);
-          resetLastExportPdf();
-          LAST_EXPORT_PDF = { blob, url, filename };
-
-          updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
-          setMachineExportStatus(t('export_status_ready'), 'ok');
-          if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_open');
-          return;
-        } catch (writeErr) {
-          console.warn('Direct file write failed after showSaveFilePicker(), falling back to viewer/download:', writeErr);
-          saveHandle = null;
-        }
-      }
-
-      // 2) Otherwise: create an object URL and trigger download/open.
       const url = URL.createObjectURL(blob);
-      resetLastExportPdf();
-      LAST_EXPORT_PDF = { blob, url, filename };
+      trackLastExportUrl(url, filename);
 
-      // Trigger exactly one export path.
-      // On Android/Samsung Internet PWA the classic blob download is the only path that
-      // reliably produces a valid file. Automatically opening a viewer afterwards can
-      // spawn a second save dialog and create a broken 0-byte file.
-      let downloadTriggered = false;
-      try {
-        downloadTriggered = downloadPdf(url, filename);
-      } catch (e) {
-        console.warn('downloadPdf failed:', e);
-      }
-
-      // Only fall back to a viewer outside Android standalone mode.
-      // Android standalone/PWA should stay on the working download flow only.
-      if (isStandalone() && !isAndroid() && !downloadTriggered) {
-        setTimeout(() => {
-          openPdfInViewer(url);
-        }, 250);
+      const downloadTriggered = downloadPdf(url, filename);
+      if (!downloadTriggered) {
+        throw new Error('PDF download could not be triggered');
       }
 
       updateToast(toastId, t('toast_export_done'), { type: 'ok', done: true });
       setMachineExportStatus(t('export_status_ready'), 'ok');
-      if (machinePdfAction) machinePdfAction.textContent = t('btn_pdf_open');
     } catch (e) {
       console.error('PDF creation failed:', e);
       updateToast(toastId, t('export_status_failed'), { type: 'danger', done: true });

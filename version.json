@@ -1,6 +1,6 @@
 {
-  "version": "v2.3.1",
-  "build": "Build:2026-03-10 BETA",
+  "version": "v2.3.3",
+  "build": "Build:2026-04-22 PDF-DIRECT-DOWNLOAD",
   "added": [
     "version + changelog",
     "Option Kunde eintragen",
@@ -9,7 +9,7 @@
   ],
   "fixed": [
     "Updater",
-    "PDF layout geändert"
+    "Direkt-Download vereinfacht, PDF öffnen entfernt, html2pdf offline im Core-Cache"
   ],
   "removed": [
     "n/a"

@@ -24,13 +24,13 @@ const CORE_URLS = [
   './icon-192x192.png',
   './icon-512x512.png',
   './favicon.ico',
-  './favicon.png'
+  './favicon.png',
+  './html2pdf.bundle.js'
 ];
 
 // Optionales Prefetch (erst nach Nutzerbestätigung)
 const FULL_URLS = [
-  ...CORE_URLS,
-  './html2pdf.bundle.js'
+  ...CORE_URLS
 ];
 
 self.addEventListener('install', (event) => {
