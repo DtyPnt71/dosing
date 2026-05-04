@@ -5,7 +5,7 @@
 
 // Static cache name: normal releases are versioned through version.json.
 // This way you only need to update version.json instead of editing multiple files.
-const CACHE_NAME = 'dosing-cache-core-v2';
+const CACHE_NAME = 'dosing-cache-core-v3';
 
 // Minimaler Offline-Shell (damit App immer startet)
 const CORE_URLS = [
@@ -30,7 +30,8 @@ const CORE_URLS = [
 
 // Optionales Prefetch (erst nach Nutzerbestätigung)
 const FULL_URLS = [
-  ...CORE_URLS
+  ...CORE_URLS,
+  './html2pdf.bundle.js'
 ];
 
 self.addEventListener('install', (event) => {

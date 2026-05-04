@@ -1,17 +1,17 @@
 {
-  "version": "v2.3.3",
-  "build": "Build:2026-04-22 PDF-DIRECT-DOWNLOAD",
+  "version": "v2.3.4",
+  "build": "Build:2026-05-04 Nightly",
   "added": [
-    "version + changelog",
-    "Option Kunde eintragen",
-    "Option Charge von Material einzutragen",
+    "Eigene Materialliste",
     "Online/Offline Status"
   ],
   "fixed": [
-    "Updater",
-    "Direkt-Download vereinfacht, PDF öffnen entfernt, html2pdf offline im Core-Cache"
+    "Reset aufgrund fehlerhaften Zusatz-Patch",
+    "(a.click() mit Fallback und verzögerung",
+    "Kein Save-Picker im Exportpfad",
+    "html2pdf.bundle.js im Core-Cache für Offline-Start"
   ],
   "removed": [
-    "n/a"
+    "Save-Picker"
   ]
 }
