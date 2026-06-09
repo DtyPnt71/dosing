@@ -106,7 +106,7 @@ window.HDT_I18N = {
     placeholder_newMatMax: 'z.B. 11,00',
     // New: UX polish
     menu_manage_materials: 'Material verwalten',
-    manage_materials_title: 'Custom-Materialien verwalten',
+    manage_materials_title: 'Materialien verwalten',
     manage_materials_intro: 'Hier können lokal gespeicherte Materialien bearbeitet oder gelöscht werden.',
     sample_comment_placeholder: 'Kommentar (optional)',
     toast_saved: 'Gespeichert',
