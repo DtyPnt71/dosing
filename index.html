@@ -12,23 +12,25 @@
     <title>HDT GmbH - Dosing</title>
 
     <link rel="icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="manifest" href="manifest.json" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="theme-2026.css" />
   </head>
   <body>
     
-  <div id="boot-overlay" class="boot-overlay" aria-live="polite">
+  <div id="boot-overlay" class="boot-overlay" aria-live="polite" style="display:none;">
     <div class="boot-card">
       <img class="boot-logo" src="logo.png" alt="HDT Logo" />
       <div class="spinner" aria-hidden="true"></div>
-      <h2 id="boot-title">Update-Skript</h2>
+      <h2 id="boot-title">Update verfügbar</h2>
       <div class="boot-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
         <div id="boot-progress-bar" class="boot-progress-bar"></div>
       </div>
-      <p id="boot-status">Initialisiere…</p>
+      <p id="boot-status">Eine neue Version kann installiert werden.</p>
       <div id="boot-details" class="boot-details"></div>
       <div id="boot-actions" class="boot-actions" style="display:none;">
-        <button id="boot-update" class="btn-primary" type="button" style="display:none;">Jetzt aktualisieren</button>
+        <button id="boot-update" class="btn-primary" type="button" style="display:none;">Update installieren</button>
         <button id="boot-later" class="btn-ghost" type="button" style="display:none;">Später</button>
         <button id="boot-retry" class="btn-primary" type="button">Neu laden</button>
       </div>
@@ -38,12 +40,12 @@
       <div class="maintenance-card">
         <img class="maintenance-logo" src="logo.png" alt="HDT Logo" />
         <div class="maintenance-gear" aria-hidden="true"></div>
-        <div class="maintenance-title">Wartungsarbeiten / Maintenance</div>
-        <p class="maintenance-text"><strong>DE:</strong> Derzeit werden Wartungsarbeiten durchgeführt. Bitte versuchen Sie es später erneut. Vielen Dank für Ihr Verständnis.</p>
-        <p class="maintenance-text"><strong>EN:</strong> We are currently performing maintenance. Please try again later. Thank's for your patience.</p>
+        <div class="maintenance-title" data-i18n="maintenance_title">Wartungsarbeiten / Maintenance</div>
+        <p class="maintenance-text" data-i18n="maintenance_text_de" data-i18n-html="true"><strong>DE:</strong> Derzeit werden Wartungsarbeiten durchgeführt. Bitte versuchen Sie es später erneut. Vielen Dank für Ihr Verständnis.</p>
+        <p class="maintenance-text" data-i18n="maintenance_text_en" data-i18n-html="true"><strong>EN:</strong> We are currently performing maintenance. Please try again later. Thanks for your patience.</p>
         <div class="maintenance-divider"></div>
         <div class="maintenance-actions">
-          <button id="maintenanceReloadBtn" class="maintenance-reload" type="button">Seite neu laden / Reload</button>
+          <button id="maintenanceReloadBtn" class="maintenance-reload" type="button" data-i18n="maintenance_reload">Seite neu laden / Reload</button>
         </div>
       </div>
     </div>
@@ -72,12 +74,13 @@
         <div class="brand">
           <img class="brand-logo" src="logo.png" alt="HDT Logo" />
           <div class="brand-text">
-            <div class="brand-title" id="headerTitle">Dosierung</div>
-            <div class="brand-subtitle" id="headerSubtitle">Tool</div>
+            <div class="brand-title" id="headerTitle">o</div>
+            <div class="brand-subtitle" id="headerSubtitle">o</div>
           </div>
         </div>
 
         <div class="toolbar">
+          <button id="maskRefreshBtn" class="icon-btn refresh-btn" type="button" aria-label="Eingabemaske leeren" title="Eingabemaske leeren">↻</button>
           <div class="menu-wrapper">
             <button id="menuBtn" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="Menü">☰</button>
 
@@ -159,7 +162,7 @@
 
         <!-- Live Ergebnis und Bestätigen -->
         <section class="card result-section" aria-live="polite">
-          <span class="result-label" id="resultCurrentLabel">Ergebnis aktuelle Probe:</span>
+          <span class="result-label" id="resultCurrentLabel">Aktuelle Probe:</span>
           <span class="value-chip" id="liveResult">–</span>
           <button id="confirmBtn" class="confirm-btn" disabled>Bestätigen</button>
         </section>
@@ -169,13 +172,13 @@
 
         <!-- Liste der gespeicherten Werte -->
         <section class="card history-section">
-          <h2 id="historyCardTitle">Verlauf (max. 5 Proben)</h2>
+          <h2 id="historyCardTitle"></h2>
           <ul id="resultList"></ul>
         </section>
 
         <!-- Durchschnittswert -->
         <section class="card mean-section">
-          <span id="meanLabel">Mittelwert:</span>
+          <span id="meanLabel">x̄:</span>
           <span class="value-chip mean-value" id="meanResult">–</span>
         </section>
 
@@ -236,20 +239,20 @@
             <h2 id="machineModalTitle">Berichtsdaten</h2>
             <p id="machineModalIntro">Bitte Angaben für den Bericht eintragen:</p>
             <label class="modal-label" for="machineInput">Maschinen-Nr</label>
-            <input type="text" id="machineInput" class="modal-input" placeholder="z.B. 1221" autocomplete="off" />
+            <input type="text" id="machineInput" class="modal-input" placeholder="" autocomplete="off" />
             <label class="modal-label" for="machineDateInput">Datum</label>
             <input type="text" id="machineDateInput" class="modal-input" placeholder="TT.MM.JJJJ" autocomplete="off" />
             <label class="modal-label" for="machineCustomerInput" id="machineCustomerLabel">Kunde</label>
-            <input type="text" id="machineCustomerInput" class="modal-input" placeholder="z.B. Musterkunde GmbH" autocomplete="off" />
+            <input type="text" id="machineCustomerInput" class="modal-input" placeholder=" -/- " autocomplete="off" />
             <label class="modal-checkbox" for="materialChargeEnabled" style="display:flex; align-items:center; gap:0.5rem; margin-top:0.75rem;">
               <input type="checkbox" id="materialChargeEnabled" />
               <span id="materialChargeLabel">Material-Charge</span>
             </label>
             <div id="materialChargeFields" style="display:none;">
               <label class="modal-label" for="materialChargeAInput" id="materialChargeALabel">1. A-Komponente</label>
-              <input type="text" id="materialChargeAInput" class="modal-input" placeholder="z.B. A12345" autocomplete="off" />
+              <input type="text" id="materialChargeAInput" class="modal-input" placeholder=" -/- " autocomplete="off" data-i18n-placeholder="placeholder_material_charge_a" />
               <label class="modal-label" for="materialChargeBInput" id="materialChargeBLabel">2. B-Komponente</label>
-              <input type="text" id="materialChargeBInput" class="modal-input" placeholder="z.B. B67890" autocomplete="off" />
+              <input type="text" id="materialChargeBInput" class="modal-input" placeholder=" -/- " autocomplete="off" data-i18n-placeholder="placeholder_material_charge_b" />
             </div>
             <label class="modal-label" for="machineCreatorSelect" id="machineCreatorLabel">Erstellt durch</label>
             <select id="machineCreatorSelect" class="modal-input" autocomplete="off">
@@ -260,11 +263,10 @@
             <input type="text" id="machineCreatorOtherInput" class="modal-input" placeholder="Name (benutzerdefiniert)" autocomplete="off" style="display:none;" />
 
             <label class="modal-label" for="machineCommentInput" id="machineCommentLabel">Kommentar (für den Bericht)</label>
-            <textarea id="machineCommentInput" class="modal-input" rows="3" placeholder="Optionaler Kommentar für den PDF-Bericht" style="resize: vertical;"></textarea>
-            <p></p>
-            <p></p>
+            <textarea id="machineCommentInput" class="modal-input" rows="3" placeholder="Optionaler Kommentar" style="resize: vertical;"></textarea>
+            <div class="modal-spacer" aria-hidden="true"></div>
             <h2 id="machineModalInfoTitle">Info:</h2>
-            <p id="machineModalInfoText">Export unter iOS inkompatibel!</p>
+            <p id="machineModalInfoText">Beta</p>
             <div id="machineExportStatus" class="small" style="margin-top:0.5rem; display:none;"></div>
             <div class="modal-actions">
               <button type="button" id="machineCancel" class="btn-secondary">Abbrechen</button>
@@ -278,14 +280,14 @@
         <div id="exportAuthModal" class="modal-backdrop" data-backdrop-close="false" style="display:none;">
           <div class="modal-dialog">
             <h2 id="exportAuthTitle">Interner Export</h2>
-            <p id="exportAuthIntro" class="small">Diese Funktion ist nur für interne Zwecke gedacht. Der PDF-Bericht wird im HDT-Layout erzeugt.</p>
+            <p id="exportAuthIntro" class="small">Diese Funktion ist nur für den internen Gebrauch.</p>
 
             <label class="modal-label" for="exportPasswordInput" id="exportPasswordLabel">Passwort</label>
             <input id="exportPasswordInput" class="modal-input" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" />
             <div id="exportAuthError" class="small" style="margin-top:0.35rem; color: var(--danger); display:none;"></div>
 
             <div class="modal-actions">
-              <button type="button" id="exportAuthCancel" class="btn-secondary">Abbrechen</button>
+              <button type="button" id="exportAuthCancel" class="btn-secondary" data-i18n="btn_cancel">Abbrechen</button>
               <button type="button" id="exportAuthConfirm" class="btn-primary">Weiter</button>
             </div>
           </div>
@@ -329,12 +331,12 @@
         
         <!-- Hinweis beim Start: Berechnung nur nach Gewicht -->
         <div id="weightNoticeModal" class="modal-backdrop" style="display:none;">
-          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="weightNoticeTitle" aria-describedby="weightNoticeText">
-            <h2 id="weightNoticeTitle">Hinweis</h2>
-            <p id="weightNoticeText" class="small" style="opacity:0.85;">[DE] Dieses Tool berechnet das Verhältnis ausschließlich nach <strong>Gewicht</strong>.</p>
-            <p id="weightNoticeText" class="small" style="opacity:0.85;">[EN] This tool calculates the ratio only based on <strong>weight</strong>.</p>
+          <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="weightNoticeTitle" aria-describedby="weightNoticeTextDe weightNoticeTextEn">
+            <h2 id="weightNoticeTitle" data-i18n="weight_notice_title">Hinweis</h2>
+            <p id="weightNoticeTextDe" class="small" style="opacity:0.85;" data-i18n="weight_notice_de" data-i18n-html="true">[DE] Dieses Tool berechnet das Verhältnis ausschließlich nach <strong>Gewicht</strong>.</p>
+            <p id="weightNoticeTextEn" class="small" style="opacity:0.85;" data-i18n="weight_notice_en" data-i18n-html="true">[EN] This tool calculates the ratio only based on <strong>weight</strong>.</p>
             <div class="modal-actions">
-              <button type="button" id="weightNoticeOk" class="btn-primary">OK</button>
+              <button type="button" id="weightNoticeOk" class="btn-primary" data-i18n="weight_notice_ok">Verstanden</button>
             </div>
           </div>
         </div>
@@ -342,11 +344,11 @@
 <!-- Lokale Daten zurücksetzen (Bestätigung) -->
         <div id="clearDataModal" class="modal-backdrop" style="display:none;">
           <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="clearDataTitle" aria-describedby="clearDataHint">
-            <h2 id="clearDataTitle">Sind Sie sicher?</h2>
-            <p id="clearDataHint" class="small" style="opacity:0.75;">Durch das Zurücksetzen werden alle lokal gespeicherten Materialien unwiderrufbar gelöscht.</p>
+            <h2 id="clearDataTitle" data-i18n="clear_data_title">Sind Sie sicher?</h2>
+            <p id="clearDataHint" class="small" style="opacity:0.75;" data-i18n="clear_data_hint">Dadurch werden alle lokal gespeicherten eigenen Materialien gelöscht.</p>
             <div class="modal-actions">
-              <button type="button" id="clearDataCancel" class="btn-secondary">Nein</button>
-              <button type="button" id="clearDataConfirm" class="btn-primary">Ja</button>
+              <button type="button" id="clearDataCancel" class="btn-secondary" data-i18n="btn_cancel">Abbrechen</button>
+              <button type="button" id="clearDataConfirm" class="btn-primary btn-danger" data-i18n="clear_data_confirm">Materialien löschen</button>
             </div>
           </div>
         </div>
@@ -355,7 +357,7 @@
         <div id="manageMaterialsModal" class="modal-backdrop" style="display:none;">
           <div class="modal-dialog">
             <div class="modal-header">
-              <h2 id="manageMaterialsTitle">Custom-Materialien verwalten</h2>
+              <h2 id="manageMaterialsTitle">Materialien verwalten</h2>
               <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
             </div>
             <div class="modal-body">
@@ -363,33 +365,33 @@
               <div id="manageMaterialsList" class="manage-materials-list"></div>
             </div>
             <div class="modal-actions">
-              <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+              <button type="button" class="btn-primary" data-close-modal data-i18n="btn_close">Schließen</button>
             </div>
           </div>
         </div>
 
         <!-- Installationsbutton (nur sichtbar wenn als PWA installierbar) -->
-        <button id="installBtn" class="install-btn" style="display: none;">App installieren</button>
+        <button id="installBtn" class="install-btn" style="display: none;">App installieren (Beta)</button>
       </div>
 
       <footer id="appFooter" class="app-footer" aria-label="Footer">
         <div class="footer-main-links">
-          <button class="footer-link" type="button" data-open-modal="impressumModal">Impressum</button>
+          <button class="footer-link" type="button" data-open-modal="impressumModal" data-i18n="footer_impressum">Impressum</button>
           <span class="footer-sep">·</span>
-          <button class="footer-link" type="button" data-open-modal="homepageModal">Homepage</button>
+          <button class="footer-link" type="button" data-open-modal="homepageModal" data-i18n="footer_homepage">Homepage</button>
           <span class="footer-sep">·</span>
-          <button class="footer-link" type="button" data-open-modal="helpModal">Hilfe</button>
+          <button class="footer-link" type="button" data-open-modal="helpModal" data-i18n="footer_help">Hilfe</button>
           <span class="footer-sep">·</span>
-          <button class="footer-link" type="button" data-open-modal="supportModal">Technischer Support</button>
+          <button class="footer-link" type="button" data-open-modal="supportModal" data-i18n="footer_support">Technischer Support</button>
           <span class="footer-sep">·</span>
-          <button class="footer-link" type="button" data-open-modal="rightsModal">Rechte</button>
+          <button class="footer-link" type="button" data-open-modal="rightsModal" data-i18n="footer_rights">Rechte</button>
         </div>
         <div class="footer-meta-row">
           <button id="footerVersionBtn" class="footer-pill footer-version" type="button" data-open-modal="aboutModal" aria-label="Versionsinformationen öffnen">
             Version <span id="footerVersion">–</span>
           </button>
           <div id="footerOfflineStatus" class="footer-pill footer-status is-online" role="status" aria-live="polite">
-            <span id="footerOfflineText"> ddasOnline</span>
+            <span id="footerOfflineText" data-i18n="footer_online">Online</span>
           </div>
         </div>
       </footer>
@@ -398,7 +400,7 @@
       <div id="impressumModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2>Impressum</h2>
+            <h2 data-i18n="impressum_title">Impressum</h2>
             <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
           <div class="modal-body">
@@ -406,11 +408,11 @@
             Müllerstraße 7<br/>
             46242 Bottrop<br/>
             Deutschland</p>
-            <p>Telefon: +49 (0) 20 41/10 13 02</p>
+            <p>Telefon: +49 (0) 20 41/10 13 01</p>
             <p>E-Mail: info@h-d-tec.de</p>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+            <button type="button" class="btn-primary" data-close-modal data-i18n="btn_close">Schließen</button>
           </div>
         </div>
       </div>
@@ -418,18 +420,18 @@
       <div id="homepageModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2>Homepage</h2>
+            <h2 data-i18n="homepage_title">Homepage</h2>
             <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
           <div class="modal-body">
-            <p>Weitere Informationen zu unseren Produkten und Lösungen finden Sie auf unserer Website.</p>
+            <p data-i18n="homepage_intro">Weitere Informationen zu unseren Produkten und Lösungen finden Sie auf unserer Website.</p>
             <p>
               <a class="link" href="https://www.h-d-tec.de" target="_blank" rel="noopener">www.h-d-tec.de</a>
             </p>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" data-close-modal>Schließen</button>
-            <a class="btn-primary btn-link" href="https://www.h-d-tec.de" target="_blank" rel="noopener">Zur Website</a>
+            <button type="button" class="btn-secondary" data-close-modal data-i18n="btn_close">Schließen</button>
+            <a class="btn-primary btn-link" href="https://www.h-d-tec.de" target="_blank" rel="noopener" data-i18n="homepage_website">Website</a>
           </div>
         </div>
       </div>
@@ -437,20 +439,20 @@
       <div id="helpModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2>Hilfe</h2>
+            <h2 data-i18n="help_title">Hilfe</h2>
             <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
           <div class="modal-body">
             <ol class="help-steps">
-              <li>Material auswählen (Sorte &amp; Typ).</li>
-              <li>Wert A und B eingeben.</li>
-              <li>Ergebnis prüfen (inkl. Toleranzstatus).</li>
-              <li>Optional: Werte bestätigen, Verlauf nutzen oder Bericht exportieren.</li>
+              <li data-i18n="help_step_1">Material auswählen (Sorte &amp; Typ).</li>
+              <li data-i18n="help_step_2">Wert A und B eingeben.</li>
+              <li data-i18n="help_step_3">Ergebnis prüfen (inkl. Toleranzstatus).</li>
+              <li data-i18n="help_step_4">Optional: Werte bestätigen, Verlauf nutzen oder Bericht exportieren.</li>
             </ol>
-            <p class="small">Hinweis: Die Berechnung erfolgt als B in % relativ zu A.</p>
+            <p class="small" data-i18n="help_hint">Hinweis: Die Berechnung erfolgt als B in % relativ zu A.</p>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn-primary" data-close-modal>Verstanden</button>
+            <button type="button" class="btn-primary" data-close-modal data-i18n="help_ok">Verstanden</button>
           </div>
         </div>
       </div>
@@ -458,17 +460,17 @@
       <div id="supportModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2>Technischer Support</h2>
+            <h2 data-i18n="support_title">Technischer Support</h2>
             <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
           <div class="modal-body">
-            <p>Wenn ein Material ergänzt oder angepasst werden soll, senden Sie bitte alle relevanten Daten an:</p>
+            <p data-i18n="support_p1">Wenn ein Material ergänzt oder angepasst werden soll, senden Sie bitte alle relevanten Daten an:</p>
             <p><strong>info@h-d-tec.de</strong></p>
-            <p>Falls vorhanden, bitte auch das zugehörige Sicherheitsdatenblatt (SDB/SDS) beifügen.</p>
-            <p>Bitte erwähnen Sie auch den Grund der E-Mail.</p>
+            <p data-i18n="support_p3">Falls vorhanden, bitte auch das zugehörige Sicherheitsdatenblatt (SDB/SDS) beifügen.</p>
+            <p data-i18n="support_p4">Bitte erwähnen Sie auch den Grund der E-Mail.</p>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+            <button type="button" class="btn-primary" data-close-modal data-i18n="btn_close">Schließen</button>
           </div>
         </div>
       </div>
@@ -476,16 +478,16 @@
       <div id="rightsModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2>Rechte &amp; Haftung</h2>
+            <h2 data-i18n="rights_title">Rechte &amp; Haftung</h2>
             <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
           <div class="modal-body">
-            <p>Dieses Tool dient als rechnerische Unterstützung.</p>
-            <p>Für die Richtigkeit der Eingaben und die Anwendung der Ergebnisse ist der Nutzer verantwortlich.</p>
-            <p>Eine Haftung für fehlerhafte Dosierungen ist ausgeschlossen.</p>
+            <p data-i18n="rights_p1">Dieses Tool dient als rechnerische Unterstützung.</p>
+            <p data-i18n="rights_p2">Für die Richtigkeit der Eingaben und die Anwendung der Ergebnisse ist der Nutzer verantwortlich.</p>
+            <p data-i18n="rights_p3">Eine Haftung für fehlerhafte Dosierungen ist ausgeschlossen.</p>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+            <button type="button" class="btn-primary" data-close-modal data-i18n="btn_close">Schließen</button>
           </div>
         </div>
       </div>
@@ -493,38 +495,38 @@
       <div id="aboutModal" class="modal-backdrop" style="display:none;">
         <div class="modal-dialog">
           <div class="modal-header">
-            <h2>Über dieses Tool</h2>
+            <h2 data-i18n="about_title">Über dieses Tool</h2>
             <button class="icon-btn modal-close" type="button" data-close-modal aria-label="Schließen">✕</button>
           </div>
           <div class="modal-body">
-            <p><strong>Dosierung</strong> berechnet den Anteil von B in Prozent relativ zu A und prüft – je nach Material – einen zulässigen Bereich.</p>
+            <p><strong>Copyright © 2026 Timo Burian.</strong> All rights reserved.</p>
             <div class="about-meta-grid">
               <div class="about-meta-item">
-                <div class="about-meta-label">Version</div>
+                <div class="about-meta-label" data-i18n="about_version_label">Version</div>
                 <div class="about-meta-value" id="aboutVersion">–</div>
               </div>
               <div class="about-meta-item">
-                <div class="about-meta-label">Build</div>
+                <div class="about-meta-label" data-i18n="about_build_label">Build</div>
                 <div class="about-meta-value" id="aboutBuild">–</div>
               </div>
             </div>
             <div class="about-changelog">
               <div class="about-changelog-section">
-                <div class="about-changelog-title">Hinzugefügt</div>
+                <div class="about-changelog-title" data-i18n="about_added">Hinzugefügt</div>
                 <ul id="aboutAddedList" class="about-changelog-list"></ul>
               </div>
               <div class="about-changelog-section">
-                <div class="about-changelog-title">Behoben</div>
+                <div class="about-changelog-title" data-i18n="about_fixed">Behoben</div>
                 <ul id="aboutFixedList" class="about-changelog-list"></ul>
               </div>
               <div class="about-changelog-section">
-                <div class="about-changelog-title">Entfernt</div>
+                <div class="about-changelog-title" data-i18n="about_removed">Entfernt</div>
                 <ul id="aboutRemovedList" class="about-changelog-list"></ul>
               </div>
             </div>
           </div>
           <div class="modal-actions">
-            <button type="button" class="btn-primary" data-close-modal>Schließen</button>
+            <button type="button" class="btn-primary" data-close-modal data-i18n="btn_close">Schließen</button>
           </div>
         </div>
       </div>
@@ -533,8 +535,9 @@
     <!-- Toast container -->
     <div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>
 
-    <script src="./html2pdf.bundle.js"></script>
+    <script src="i18n.js"></script>
     <script src="app.js"></script>
+    <script src="pwa-update.js"></script>
     <script src="install.js"></script>
   </body>
 </html>

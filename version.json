@@ -1,17 +1,38 @@
 {
-  "version": "v2.3.4",
-  "build": "Build:2026-05-04 Nightly",
+  "version": "v2.4.7",
+  "build": "Build:2026-06-09 Fix:material-family-groups",
+  "forceReload": true,
+  "assets": [
+    "./",
+    "./index.html",
+    "./app.js",
+    "./i18n.js",
+    "./pwa-update.js",
+    "./styles.css",
+    "./theme-2026.css",
+    "./service-worker.js",
+    "./install.js",
+    "./version.json",
+    "./materials.json",
+    "./creator-names.json",
+    "./manifest.json",
+    "./logo.png",
+    "./apple-touch-icon.png",
+    "./icon-192x192.png",
+    "./icon-512x512.png",
+    "./favicon.ico",
+    "./favicon.png",
+    "./html2pdf.bundle.js"
+  ],
   "added": [
-    "Eigene Materialliste",
-    "Online/Offline Status"
+    "Zentrale Übersetzungsdatei i18n.js für UI-Texte, Labels und Platzhalter"
   ],
   "fixed": [
-    "Reset aufgrund fehlerhaften Zusatz-Patch",
-    "(a.click() mit Fallback und verzögerung",
-    "Kein Save-Picker im Exportpfad",
-    "html2pdf.bundle.js im Core-Cache für Offline-Start"
+    "PDF-Export-Modal: Buttons werden nicht mehr abgeschnitten und haben einheitliche Größen",
+    "Material-Charge-Platzhalter werden zentral aus i18n.js gesetzt und überschreiben nicht mehr uneinheitlich die HTML-Fallbacks",
+    "Custom-Materialverwaltung: Materialien sind jetzt nach PU / PS / SI gruppiert, farblich getrennt und als aufklappbare Kategorien dargestellt"
   ],
   "removed": [
-    "Save-Picker"
+    ""
   ]
 }

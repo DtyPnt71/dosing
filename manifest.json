@@ -1,23 +1,28 @@
 {
+  "id": "./",
   "name": "HDT GmbH Dosier-Tool",
   "short_name": "Dosier-Tool",
+  "description": "Berechnung und Dokumentation von Mischungsverhältnissen für HDT Dosiertechnik.",
   "start_url": "./",
-  "display": "fullscreen",
-  "version": "v2.3.4",
-  "background_color": "#ffffff",
-  "theme_color": "#0f0f0f",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "version": "v2.4.7",
+  "background_color": "#071018",
+  "theme_color": "#071018",
   "icons": [
     {
       "src": "icon-192x192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "icon-512x512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "scope": "./",
   "maintenance": false
 }

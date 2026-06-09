@@ -71,7 +71,7 @@
   }
 
   function bootFail(ui, title, err) {
-    if (ui.titleEl) ui.titleEl.textContent = "Update-Skript – Fehler";
+    if (ui.titleEl) ui.titleEl.textContent = "App konnte nicht vollständig geladen werden";
     if (ui.statusEl) ui.statusEl.textContent = title;
 
     const details = err && (err.stack || err.message) ? (err.stack || err.message) : String(err || "");
@@ -146,9 +146,9 @@
     const finalFixed = fixed.length ? fixed : legacyFixesFromBuild;
     const finalRemoved = removed;
 
-    if (finalAdded.length) sections.push({ title: "Added", items: finalAdded });
-    if (finalFixed.length) sections.push({ title: "Fixed", items: finalFixed });
-    if (finalRemoved.length) sections.push({ title: "Removed", items: finalRemoved });
+    if (finalAdded.length) sections.push({ title: "Neu", items: finalAdded });
+    if (finalFixed.length) sections.push({ title: "Verbessert", items: finalFixed });
+    if (finalRemoved.length) sections.push({ title: "Entfernt", items: finalRemoved });
 
     if (sections.length) {
       sections.forEach((sec) => {
@@ -183,14 +183,11 @@
     // Pseudo-Fortschritt: bewusst "lesbar" langsam.
     // (Vor allem in PWAs wird sonst sofort neu geladen und der Nutzer sieht nichts.)
     const steps = [
-      { p: 8,  t: "Connecting to update server…", d: 1300 },
-      { p: 14, t: "Connected successfully",       d: 900  },
-      { p: 22, t: "Checking package integrity (md5)…", d: 420 },
-      { p: 30, t: "Approved",                    d: 420  },
-      { p: 44, t: "Reading data…",               d: 900 },
-      { p: 58, t: "Downloading update…",         d: 1600 },
-      { p: 74, t: "Applying update…",            d: 2200 },
-      { p: 88, t: "Finalizing…",                 d: 1100 },
+      { p: 12, t: "Neue Dateien werden vorbereitet…", d: 420 },
+      { p: 32, t: "App-Cache wird aktualisiert…", d: 520 },
+      { p: 58, t: "Offline-Version wird erneuert…", d: 520 },
+      { p: 82, t: "Neue Version wird aktiviert…", d: 520 },
+      { p: 94, t: "App wird neu geladen…", d: 360 },
     ];
 
     for (const s of steps) {
@@ -203,7 +200,7 @@
     // "Warten" etwas länger, aber nicht zu spammy.
     let spinCount = 0;
     while (p < 98) {
-      appendDetailLine(ui, "Activate features…", "log");
+      appendDetailLine(ui, "Aktiviere neue Funktionen…", "log");
       p += 2;
       setBootProgress(ui, p);
       spinCount += 1;
@@ -240,7 +237,7 @@
             await runPseudoUpdateLog(ui);
           } catch (_) {}
 
-          appendDetailLine(ui, "Restarting application…", "log");
+          appendDetailLine(ui, "App wird neu gestartet…", "log");
           setBootProgress(ui, 99);
           await delay(900);
 
@@ -264,28 +261,14 @@
 
   async function runChecks() {
     const ui = bootUI();
-    showBootOverlay();
 
     try {
-      setBootProgress(ui, 10);
-      setBootStatus(ui, "1/4 Prüfe Grundstruktur (ID's + Panel)");
-      await delay(1450);
-
-      const requiredIds = ["menuBtn", "menuPanel", "exportMenuItem", "pdfReport"]; 
+      // Self-test now runs silently. The overlay is only used for real errors or updates.
+      const requiredIds = ["menuBtn", "menuPanel", "exportMenuItem", "pdfReport"];
       for (const id of requiredIds) {
         if (!qs(id)) bootFail(ui, `Fehlendes Element: #${id}`, `#${id} nicht gefunden`);
       }
 
-      setBootProgress(ui, 35);
-      setBootStatus(ui, "2/4 Prüfe Abhängigkeiten.. (HTML2PDF)");
-      await delay(500);
-      if (typeof window.html2pdf !== "function") {
-        bootFail(ui, "PDF-Modul nicht geladen", "window.html2pdf ist nicht verfügbar");
-      }
-
-      setBootProgress(ui, 60);
-      setBootStatus(ui, "3/4 Prüfe Speicherzugriff (Cache)");
-      await delay(350);
       try {
         const k = "__boot_test__";
         localStorage.setItem(k, "1");
@@ -294,16 +277,10 @@
         bootFail(ui, "Speicherzugriff blockiert (localStorage)", e);
       }
 
-      setBootProgress(ui, 85);
-      setBootStatus(ui, "4/4 Abschließen...");
-      await delay(350);
-      await new Promise((r) => requestAnimationFrame(r));
-      await new Promise((r) => setTimeout(r, 60));
-
-      setBootProgress(ui, 100);
       hideBootOverlay();
       return true;
     } catch (e) {
+      showBootOverlay();
       return false;
     }
   }
@@ -372,233 +349,9 @@ const clearCacheBtn = document.getElementById("clearCacheBtn") || document.getEl
 
 
 // === Language Handling (DE / EN) ===
-const TRANSLATIONS = {
-  de: {
-    header_title: 'Dosierung',
-    header_subtitle: 'Tool',
-    step_1: 'Schritt 1',
-    step_2: 'Schritt 2',
-    step_3: 'Schritt 3',
-    section_history: 'Verlauf',
-    history_card_title: 'Verlauf (max. 5 Proben)',
-
-    // Menu
-    menu_export_title: 'Export',
-    menu_display_title: 'Darstellung',
-    menu_language_title: 'Sprache',
-    menu_data_title: 'Daten',
-    menu_info_title: 'Info',
-    menu_about: 'Über dieses Tool',
-    menu_add_material: 'Material ergänzen',
-    menu_clear_data: 'Lokale Daten zurücksetzen',
-    menu_export_item: 'PDF-Bericht exportieren',
-
-    // Export auth
-    export_auth_title: 'Interner Export',
-    export_auth_intro: 'Diese Funktion ist nur für interne Zwecke gedacht. Der PDF-Bericht wird im HDT-Layout erzeugt.',
-    export_password_label: 'PIN',
-    export_password_btn_continue: 'Weiter',
-    export_password_error: 'Falsche PIN.',
-    tol_ok_title: 'Dosierung korrekt',
-    tol_low_title: 'Härtermangel',
-    tol_high_title: 'Härterüberschuss',
-    tol_neutral_title: 'Kein Bereich hinterlegt',
-    tol_msg_ok: 'Ergebnis liegt im vorgegebenen Bereich.',
-    tol_msg_low: 'Dosierung anpassen - Dosierblock richtung Hydraulik',
-    tol_msg_high: 'Dosierung anpassen - Dosierblock richtung Dosierpumpe',
-    tol_msg_neutral: 'Keine Toleranz hinterlegt – keine Prüfung.',
-    label_materialFamily: 'Materialsorte:',
-    label_materialSpec: 'Materialtyp:',
-    history_title: 'Verlauf (max. 5 Proben)',
-    mean_label: 'Mittelwert:',
-    export_button: 'Bericht exportieren',
-    status_label: 'Status:',
-    tol_range_label: 'Bereich:',
-    tol_target_label: 'Zielwert:',
-    pdf_machine: 'Maschinen-Nr:',
-    pdf_customer: 'Kunde:',
-    pdf_material_charge: 'Material-Charge',
-    pdf_family: 'Materialsorte:',
-    pdf_spec: 'Materialtyp:',
-    pdf_mean: 'Mittelwert:',
-    pdf_creator: 'Erstellt durch:',
-    result_current_label: 'Ergebnis aktuelle Probe:',
-    confirm_button: 'Bestätigen',
-    install_button: 'App installieren',
-    machine_modal_title: 'Berichtsdaten',
-    machine_modal_intro: 'Bitte Angaben für den Bericht eintragen:',
-    machine_modal_label_machine: 'Maschinen-Nr',
-    machine_modal_label_date: 'Datum',
-    machine_modal_label_customer: 'Kunde',
-    machine_modal_label_material_charge: 'Material-Charge',
-    machine_modal_label_material_charge_a: '1. A-Komponente',
-    machine_modal_label_material_charge_b: '2. B-Komponente',
-    machine_modal_label_creator: 'Erstellt durch',
-    machine_modal_info_title: 'Info:',
-    machine_modal_info_text: 'Tipp: PDF zuerst erstellen, danach öffnen/teilen. E-Mail wird separat gesendet (Textbericht).',
-    btn_cancel: 'Abbrechen',
-    btn_pdf_create: 'PDF erstellen',
-    btn_pdf_open: 'PDF öffnen',
-    btn_email_send: 'E-Mail senden',
-    export_status_creating: 'PDF wird erstellt …',
-    export_status_ready: 'PDF ist bereit.',
-    export_status_failed: 'PDF konnte nicht erstellt werden.',
-    export_status_hint: 'Hinweis: In PWAs wird das PDF im Viewer geöffnet oder per „Teilen“ weitergegeben.',
-    material_modal_title: 'Material hinzufügen',
-    material_modal_intro: 'Bitte die Daten für das neue Material eintragen:',
-    material_modal_family: 'Materialsorte',
-    material_modal_spec: 'Materialtyp',
-    placeholder_machine_no: 'z.B. 1221',
-    placeholder_machine_date: 'TT.MM.JJJJ',
-    placeholder_machine_customer: 'z.B. Musterkunde GmbH',
-    placeholder_material_charge_a: 'z.B. A12345',
-    placeholder_material_charge_b: 'z.B. B67890',
-    placeholder_machine_creator: 'Name des Erstellers',
-    creator_select_placeholder: 'Bitte wählen',
-    creator_select_other: 'Andere …',
-    placeholder_creator_other: 'Name (benutzerdefiniert)',
-    label_componentA: 'Komponente A',
-    label_componentB: 'Komponente B',
-    menu_design: 'Design',
-    menu_cache: 'Cache leeren',
-    menu_add_material: 'Material hinzufügen',
-    target_by_weight: 'Herstellervorgabe nach Gewicht:',
-    material_modal_id_label: 'Material ID (intern)',
-    material_modal_name_label: 'Material name',
-    placeholder_newMatName: 'z.B. Emcepren 510',
-    material_modal_target_label: 'Zielwert in %',
-    material_modal_min_label: 'Dosierung min. in % (optional)',
-    material_modal_max_label: 'Dosierung max. in % (optional)',
-    btn_save_material: 'Speichern',
-    placeholder_newMatId: 'z.B. Emcepren-510',
-    placeholder_newMatTarget: 'z.B. 10,00',
-    placeholder_newMatMin: 'z.B. 9,00',
-    placeholder_newMatMax: 'z.B. 11,00',
-    // New: UX polish
-    menu_manage_materials: 'Material verwalten',
-    manage_materials_title: 'Custom-Materialien verwalten',
-    manage_materials_intro: 'Hier können lokal gespeicherte Materialien bearbeitet oder gelöscht werden.',
-    sample_comment_placeholder: 'Kommentar (optional)',
-    toast_saved: 'Gespeichert',
-    toast_deleted: 'Gelöscht',
-    toast_cleared: 'Lokale Daten wurden gelöscht.',
-    toast_exporting: 'Bericht wird erstellt …',
-    toast_export_done: 'Bericht erstellt',
-  },
-  en: {
-    header_title: 'Dosing',
-    header_subtitle: 'Tool',
-    step_1: 'Step 1',
-    step_2: 'Step 2',
-    step_3: 'Step 3',
-    section_history: 'History',
-    history_card_title: 'History (max. 5 samples)',
-
-    // Menu
-    menu_export_title: 'Export',
-    menu_display_title: 'Display',
-    menu_language_title: 'Language',
-    menu_data_title: 'Data',
-    menu_info_title: 'Info',
-    menu_about: 'About this tool',
-    menu_add_material: 'Add material',
-    menu_clear_data: 'Reset local data',
-    menu_export_item: 'Export PDF report',
-
-    // Export auth
-    export_auth_title: 'Internal export',
-    export_auth_intro: 'This function is intended for internal use only. The PDF report is generated in the HDT layout.',
-    export_password_label: 'PIN',
-    export_password_btn_continue: 'Continue',
-    export_password_error: 'Incorrect PIN.',
-    tol_ok_title: 'Dosing correct',
-    tol_low_title: 'Hardener deficiency',
-    tol_high_title: 'Hardener excess',
-    tol_neutral_title: 'No tolerance range stored',
-    tol_msg_ok: 'Result is within the specified range.',
-    tol_msg_low: 'Adjust dosing – dosing block towards hydraulics.',
-    tol_msg_high: 'Adjust dosing – dosing block towards metering pump.',
-    tol_msg_neutral: 'No tolerance range defined – no check performed.',
-    label_materialFamily: 'Material family:',
-    label_materialSpec: 'Material type:',
-    history_title: 'History (max. 5 samples)',
-    mean_label: 'Mean value:',
-    export_button: 'Export report',
-    status_label: 'Status:',
-    tol_range_label: 'Range:',
-    tol_target_label: 'Target:',
-    pdf_machine: 'Machine No.:',
-    pdf_customer: 'Customer:',
-    pdf_material_charge: 'Material batch',
-    pdf_family: 'Material family:',
-    pdf_spec: 'Material type:',
-    pdf_mean: 'Mean value:',
-    pdf_creator: 'Created by:',
-    result_current_label: 'Result current sample:',
-    confirm_button: 'Confirm',
-    install_button: 'Install app',
-    machine_modal_title: 'Report data',
-    machine_modal_intro: 'Please enter the details for the report:',
-    machine_modal_label_machine: 'Machine No.',
-    machine_modal_label_date: 'Date',
-    machine_modal_label_customer: 'Customer',
-    machine_modal_label_material_charge: 'Material batch',
-    machine_modal_label_material_charge_a: '1. A component',
-    machine_modal_label_material_charge_b: '2. B component',
-    machine_modal_label_creator: 'Created by',
-    machine_modal_info_title: 'Info:',
-    machine_modal_info_text: 'Tip: First create the PDF, then open/share it. Email is sent separately (text report).',
-    btn_cancel: 'Cancel',
-    btn_pdf_create: 'Create PDF',
-    btn_pdf_open: 'Open PDF',
-    btn_email_send: 'Send email',
-    export_status_creating: 'Creating PDF …',
-    export_status_ready: 'PDF is ready.',
-    export_status_failed: 'Could not create PDF.',
-    export_status_hint: 'Note: In installed PWAs the PDF opens in a viewer or can be shared.',
-    material_modal_title: 'Add material',
-    material_modal_intro: 'Please enter the data for the new material:',
-    material_modal_family: 'Material family',
-    material_modal_spec: 'Material type',
-    placeholder_machine_no: 'e.g. 1221',
-    placeholder_machine_date: 'DD.MM.YYYY',
-    placeholder_machine_customer: 'e.g. Sample Customer Ltd.',
-    placeholder_material_charge_a: 'e.g. A12345',
-    placeholder_material_charge_b: 'e.g. B67890',
-    placeholder_machine_creator: 'Name of creator',
-    creator_select_placeholder: 'Please select',
-    creator_select_other: 'Other …',
-    placeholder_creator_other: 'Custom name',
-    label_componentA: 'Component A',
-    label_componentB: 'Component B',
-    menu_design: 'Design',
-    menu_cache: 'Clear cache',
-    menu_add_material: 'Add material',
-    target_by_weight: 'Manufacturer specification by weight:',
-    material_modal_id_label: 'Material ID (internal)',
-    material_modal_name_label: 'Material name',
-    material_modal_target_label: 'Target in %',
-    material_modal_min_label: 'Dosing min. in % (optional)',
-    material_modal_max_label: 'Dosing max. in % (optional)',
-    btn_save_material: 'Save',
-    placeholder_newMatId: 'e.g. Emcepren-510',
-    placeholder_newMatName: 'Display name',
-    placeholder_newMatTarget: 'e.g. 10,00',
-    placeholder_newMatMin: 'e.g. 9,00',
-    placeholder_newMatMax: 'e.g. 11,00',
-
-    // New: UX polish
-    menu_manage_materials: 'Manage materials',
-    manage_materials_title: 'Manage custom materials',
-    manage_materials_intro: 'Edit or delete locally stored materials.',
-    sample_comment_placeholder: 'Comment (optional)',
-    toast_saved: 'Saved',
-    toast_deleted: 'Deleted',
-    toast_cleared: 'Local data cleared.',
-    toast_exporting: 'Creating report …',
-    toast_export_done: 'Report created',
-  }
-};
+// Translations are maintained in i18n.js.
+// Fallback keeps the app usable if the file is missing during development.
+const TRANSLATIONS = window.HDT_I18N || { de: {}, en: {} };
 
 let CURRENT_LANG = (localStorage.getItem('hdt-lang') === 'en') ? 'en' : 'de';
 
@@ -761,12 +514,42 @@ function getStatusForValue(value, spec) {
 
 
 function t(key) {
-  const dict = TRANSLATIONS[CURRENT_LANG] || TRANSLATIONS.de;
-  return (dict && key in dict) ? dict[key] : (TRANSLATIONS.de[key] || key);
+  const dict = TRANSLATIONS[CURRENT_LANG] || TRANSLATIONS.de || {};
+  const fallback = TRANSLATIONS.de || {};
+  return (dict && key in dict) ? dict[key] : (fallback[key] || key);
+}
+
+function applyDataI18n(root = document) {
+  root.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    if (!key) return;
+    const value = t(key);
+    if (el.getAttribute('data-i18n-html') === 'true') {
+      el.innerHTML = value;
+    } else {
+      el.textContent = value;
+    }
+  });
+
+  root.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (key) el.setAttribute('placeholder', t(key));
+  });
+
+  root.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-title');
+    if (key) el.setAttribute('title', t(key));
+  });
+
+  root.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    if (key) el.setAttribute('aria-label', t(key));
+  });
 }
 
 function applyLanguage() {
   try {
+    applyDataI18n();
     if (document.documentElement) {
       document.documentElement.lang = CURRENT_LANG;
     }
@@ -888,6 +671,12 @@ function applyLanguage() {
     // Install button
     if (installBtn) {
       installBtn.textContent = t('install_button');
+    }
+
+    const maskRefreshBtn = document.getElementById('maskRefreshBtn');
+    if (maskRefreshBtn) {
+      maskRefreshBtn.title = t('refresh_mask');
+      maskRefreshBtn.setAttribute('aria-label', t('refresh_mask'));
     }
 
     // Machine modal texts
@@ -1052,14 +841,6 @@ function toggleLanguage() {
   localStorage.setItem('hdt-lang', CURRENT_LANG);
   applyLanguage();
 
-// Theme fixed to default (themes removed)
-(function initThemeFixed(){
-  if (document.body) {
-    document.body.classList.remove('theme-default','theme-ocean','theme-sunset');
-    document.body.classList.add('theme-default');
-  }
-  try { localStorage.removeItem('hdt-theme'); } catch(e) {}
-})();
   // Toleranzbox neu rendern, damit Status/Meldungen in neuer Sprache erscheinen
   try {
     if (typeof renderTolerance === 'function') {
@@ -1068,6 +849,14 @@ function toggleLanguage() {
   } catch (e) {}
 }
 
+// Theme fixed to default (themes removed)
+(function initThemeFixed(){
+  if (document.body) {
+    document.body.classList.remove('theme-default','theme-ocean','theme-sunset');
+    document.body.classList.add('theme-default');
+  }
+  try { localStorage.removeItem('hdt-theme'); } catch(e) {}
+})();
 
 // direkt initial anwenden
 applyLanguage();
@@ -1620,7 +1409,48 @@ function triggerPreparedPdfDownload() {
   return handled;
 }
 
+const PDF_ENGINE_URL = './html2pdf.bundle.js';
+let PDF_ENGINE_LOAD_PROMISE = null;
+
+function ensurePdfEngineLoaded() {
+  if (typeof window.html2pdf === 'function') return Promise.resolve(true);
+  if (PDF_ENGINE_LOAD_PROMISE) return PDF_ENGINE_LOAD_PROMISE;
+
+  PDF_ENGINE_LOAD_PROMISE = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-pdf-engine="html2pdf"]') || document.querySelector('script[src*="html2pdf.bundle.js"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true), { once: true });
+      existing.addEventListener('error', () => reject(new Error('PDF-Modul konnte nicht geladen werden.')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = PDF_ENGINE_URL;
+    script.async = true;
+    script.defer = true;
+    script.dataset.pdfEngine = 'html2pdf';
+    script.onload = () => resolve(true);
+    script.onerror = () => {
+      PDF_ENGINE_LOAD_PROMISE = null;
+      reject(new Error('PDF-Modul konnte nicht geladen werden.'));
+    };
+    document.head.appendChild(script);
+  }).then(() => {
+    if (typeof window.html2pdf !== 'function') {
+      PDF_ENGINE_LOAD_PROMISE = null;
+      throw new Error('PDF-Modul ist nicht verfügbar.');
+    }
+    return true;
+  });
+
+  return PDF_ENGINE_LOAD_PROMISE;
+}
+
 function generatePdfBlob(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment, customerName, materialChargeEnabledValue, materialChargeAValue, materialChargeBValue) {
+  return ensurePdfEngineLoaded().then(() => generatePdfBlobReady(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment, customerName, materialChargeEnabledValue, materialChargeAValue, materialChargeBValue));
+}
+
+function generatePdfBlobReady(machineNo, reportDate, famText, specText, tolText, meanText, creatorName, exportComment, customerName, materialChargeEnabledValue, materialChargeAValue, materialChargeBValue) {
   const root = document.getElementById("pdfReport");
   if (!root || typeof window.html2pdf === "undefined") {
     return Promise.reject(new Error('PDF template (#pdfReport) or html2pdf is missing'));
@@ -1840,10 +1670,14 @@ if (clearDataConfirm) {
     if (typeof clearAppState === 'function') {
       clearAppState();
     }
-    // Reload page so app state (materials.json + localStorage) is reinitialized cleanly
-    setTimeout(() => {
-      try { window.location.reload(); } catch (e) {}
-    }, 50);
+    // Reload page so app state (materials.json + localStorage) is reinitialized cleanly.
+    // App caches are refreshed, but local materials are only deleted because the user confirmed this modal.
+    Promise.resolve(typeof refreshAppCachesOnly === 'function' ? refreshAppCachesOnly() : null)
+      .finally(() => {
+        setTimeout(() => {
+          try { window.location.reload(); } catch (e) {}
+        }, 80);
+      });
   });
 }
 
@@ -2005,6 +1839,34 @@ if (machineEmailAction) {
   });
 }
 
+// App-Caches aktualisieren, ohne lokale Materialien direkt anzufassen.
+// Wird beim bewussten Zurücksetzen genutzt, nachdem der Nutzer bestätigt hat.
+async function refreshAppCachesOnly() {
+  if (navigator.onLine === false) return false;
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      const channel = typeof MessageChannel !== 'undefined' ? new MessageChannel() : null;
+      if (channel) {
+        const response = new Promise((resolve) => {
+          const timer = setTimeout(() => resolve(false), 2500);
+          channel.port1.onmessage = () => { clearTimeout(timer); resolve(true); };
+        });
+        navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_RELEASE_CACHES' }, [channel.port2]);
+        await response;
+      }
+    }
+  } catch (_) {}
+
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys
+        .filter((key) => /dosing|hdt/i.test(key))
+        .map((key) => caches.delete(key)));
+    }
+  } catch (_) {}
+}
+
 // Cache leeren Button: entfernt gespeicherte Einstellungen und setzt Ansicht zurück
 function clearAppState() {
   try {
@@ -2057,6 +1919,39 @@ if (clearCacheBtn) {
       window.location.reload();
     }
   });
+}
+
+function resetInputMask() {
+  // Startseiten-Refresh: neue Messung beginnen, ohne lokale Materialien oder Einstellungen zu löschen.
+  if (inputA) inputA.value = "";
+  if (inputB) inputB.value = "";
+  if (sampleComment) sampleComment.value = "";
+
+  LAST_LIVE_VAL = null;
+  results = [];
+  resultsMeta = [];
+
+  if (liveResult) {
+    liveResult.textContent = "–";
+    liveResult.dataset.status = 'neutral';
+  }
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.classList.remove('is-loading', 'is-done');
+  }
+
+  if (typeof updateList === 'function') updateList();
+  if (typeof updateMean === 'function') updateMean();
+  if (typeof resetLastExportPdf === 'function') resetLastExportPdf();
+  if (tolBox) tolBox.style.display = 'none';
+  if (typeof renderTolerance === 'function') renderTolerance();
+  if (typeof updateStepper === 'function') updateStepper();
+  showToast(t('toast_mask_reset'), { type: 'neutral' });
+}
+
+const maskRefreshBtn = document.getElementById('maskRefreshBtn');
+if (maskRefreshBtn) {
+  maskRefreshBtn.addEventListener('click', resetInputMask);
 }
 
 function calcLive() {
@@ -2150,6 +2045,19 @@ confirmBtn.addEventListener("click", () => {
 
 function updateList() {
   resultList.innerHTML = "";
+  const historyCard = resultList ? resultList.closest('.history-section') : null;
+  const isEmpty = !results.length;
+  if (historyCard) historyCard.classList.toggle('is-empty', isEmpty);
+  if (resultList) resultList.classList.toggle('is-empty', isEmpty);
+
+  if (isEmpty) {
+    const li = document.createElement('li');
+    li.className = 'history-empty';
+    li.textContent = t('history_empty');
+    resultList.appendChild(li);
+    updateExportButtonState();
+    return;
+  }
   results.forEach((r, i) => {
     const meta = resultsMeta[i] || {};
     const ts = typeof meta.ts === 'number' ? new Date(meta.ts) : null;
@@ -2194,10 +2102,12 @@ function deleteResult(index) {
 function updateMean() {
   if (!results.length) {
     meanResult.textContent = "–";
+    if (typeof renderTolerance === 'function') renderTolerance();
     return;
   }
   const sum = results.reduce((a, b) => a + b, 0);
   meanResult.textContent = fmt2(sum / results.length);
+  if (typeof renderTolerance === 'function') renderTolerance();
 }
 
 // INSTALL LOGIK
@@ -2222,192 +2132,7 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
   installBtn.style.display = "block";
 }
 
-if ("serviceWorker" in navigator) {
-  (async () => {
-    const reg = await navigator.serviceWorker.register("./service-worker.js");
-
-    const VER_KEY = "hdt_installed_version";
-    const BUILD_KEY = "hdt_installed_build";
-    const ACK_KEY = "hdt_acknowledged_version";
-
-    async function fetchVersion() {
-      try {
-        const res = await fetch("./version.json", { cache: "no-store" });
-        if (!res.ok) throw new Error(`version.json HTTP ${res.status}`);
-        const j = await res.json();
-        return {
-          version: j.version || "",
-          build: j.build || "",
-          // Preferred: categorized release notes (accept common variants/casing)
-          added: Array.isArray(j.added) ? j.added : (Array.isArray(j.Added) ? j.Added : []),
-          fixed: Array.isArray(j.fixed) ? j.fixed : (Array.isArray(j.Fixed) ? j.Fixed : (Array.isArray(j.fixes) ? j.fixes : [])),
-          removed: Array.isArray(j.removed) ? j.removed : (Array.isArray(j.Removed) ? j.Removed : []),
-          // Backward compat
-          changes: Array.isArray(j.changes) ? j.changes : (Array.isArray(j.Changes) ? j.Changes : [])
-        };
-      } catch (e) {
-        return null; // offline or blocked
-      }
-    }
-
-    function storeCurrent(meta) {
-      try {
-        if (!meta) return;
-        if (meta.version) {
-          const version = String(meta.version);
-          localStorage.setItem(VER_KEY, version);
-          localStorage.setItem(ACK_KEY, version);
-          window.APP_VERSION = version;
-        }
-        if (meta.build) localStorage.setItem(BUILD_KEY, String(meta.build));
-      } catch (_) {}
-    }
-
-    function markAcknowledged(meta) {
-      try {
-        if (!meta?.version) return;
-        localStorage.setItem(ACK_KEY, String(meta.version));
-      } catch (_) {}
-    }
-
-    function shouldPromptForVersion(meta) {
-      try {
-        const nextVersion = String(meta?.version || "").trim();
-        if (!nextVersion) return false;
-        const installedVersion = String(localStorage.getItem(VER_KEY) || "").trim();
-        const acknowledgedVersion = String(localStorage.getItem(ACK_KEY) || "").trim();
-        return nextVersion !== installedVersion && nextVersion !== acknowledgedVersion;
-      } catch (_) {
-        return !!String(meta?.version || "").trim();
-      }
-    }
-
-    function promptUpdate(meta) {
-      if (!window.__updaterUI || typeof window.__updaterUI.prompt !== "function") return;
-
-      window.__updaterUI.prompt({
-        version: meta?.version,
-        build: meta?.build,
-        added: meta?.added,
-        fixed: meta?.fixed,
-        removed: meta?.removed,
-        changes: meta?.changes,
-        onLater: () => {
-          markAcknowledged(meta);
-        },
-        onUpdate: async () => {
-          storeCurrent(meta);
-          // Robust, device-agnostic SW activation:
-          // - Chrome/Firefox (Windows)
-          // - Samsung Internet PWA
-          // - iOS PWA (fallback reload)
-
-          // 1) Listen early so we don't miss a fast controllerchange.
-          let reloaded = false;
-          const reloadOnce = () => {
-            if (reloaded) return;
-            reloaded = true;
-            storeCurrent(meta);
-            // Keep it simple: on iOS PWAs this is the most reliable.
-            location.reload();
-          };
-          navigator.serviceWorker.addEventListener("controllerchange", reloadOnce, { once: true });
-
-          // 2) Kick SW update.
-          await reg.update().catch(() => {});
-
-          // 3) Helper: tell the waiting worker to activate.
-          const tryActivateWaiting = () => {
-            if (!reg.waiting) return false;
-            try { reg.waiting.postMessage({ type: "PREFETCH_FULL" }); } catch (_) {}
-            try { reg.waiting.postMessage({ type: "SKIP_WAITING" }); } catch (_) {}
-            return true;
-          };
-
-          // If already waiting, activate immediately.
-          if (tryActivateWaiting()) return;
-
-          // 4) If an installing worker exists, wait until it becomes installed/waiting.
-          if (reg.installing) {
-            const installing = reg.installing;
-            await new Promise((resolve) => {
-              const onState = () => {
-                if (installing.state === 'installed' || installing.state === 'redundant') {
-                  try { installing.removeEventListener('statechange', onState); } catch (_) {}
-                  resolve(true);
-                }
-              };
-              installing.addEventListener('statechange', onState);
-              // In case it's already installed
-              onState();
-              // Safety timeout for quirky PWA engines
-              setTimeout(() => {
-                try { installing.removeEventListener('statechange', onState); } catch (_) {}
-                resolve(false);
-              }, 12000);
-            });
-            if (tryActivateWaiting()) return;
-          }
-
-          // 5) Fallback: if we didn't get controllerchange, force a reload.
-          setTimeout(() => {
-            if (!reloaded) location.reload();
-          }, 1500);
-        }
-      });
-    }
-
-    // Wait until the self-test is finished, then do update check
-    try { await window.__bootReady; } catch (_) {}
-
-    // If maintenance mode is enabled, do not run the update prompt flow.
-    // Maintenance must take precedence and should apply immediately.
-    try {
-      if (document.body.classList.contains('is-maintenance')) return;
-      const mr = await fetch('manifest.json', { cache: 'no-store' });
-      const mm = await mr.json();
-      if (mm && mm.maintenance === true) return;
-    } catch (_) {}
-
-    // 1) Wenn ein Worker schon "waiting" ist: Update anbieten
-    const currentMeta = await fetchVersion();
-    if (currentMeta) {
-      applyVersionMeta(currentMeta);
-    }
-
-    // 1) Wenn ein Worker schon "waiting" ist: Update anbieten
-    if (reg.waiting && shouldPromptForVersion(currentMeta)) {
-      promptUpdate(currentMeta);
-    }
-
-    // 2) Wenn online eine neue version.json vorliegt, anbieten
-    if (currentMeta && currentMeta.version) {
-      let storedVer = "";
-      try { storedVer = localStorage.getItem(VER_KEY) || ""; } catch (_) {}
-
-      // Beim allerersten Start: Version merken, nicht direkt "Update" anbieten
-      if (!storedVer) {
-        storeCurrent(currentMeta);
-      } else if (shouldPromptForVersion(currentMeta)) {
-        promptUpdate(currentMeta);
-      }
-    }
-
-    // 3) Updatefound -> wenn installiert & waiting, anbieten
-    reg.addEventListener("updatefound", () => {
-      const nw = reg.installing;
-      if (!nw) return;
-      nw.addEventListener("statechange", async () => {
-        if (nw.state === "installed" && navigator.serviceWorker.controller) {
-          const meta = await fetchVersion();
-          if (shouldPromptForVersion(meta)) {
-            promptUpdate(meta);
-          }
-        }
-      });
-    });
-  })();
-}
+// PWA update handling lives in pwa-update.js.
 
 
 // === Added: Materials & Tolerance Logic ===
@@ -2645,35 +2370,65 @@ function openManageMaterialsModal() {
 function renderManageMaterialsList() {
   if (!manageMaterialsList) return;
   const famOrder = ['PU', 'PS', 'SI'];
-  const items = [];
-  famOrder.forEach((fam) => {
-    const list = (CUSTOM_MATERIALS && Array.isArray(CUSTOM_MATERIALS[fam])) ? CUSTOM_MATERIALS[fam] : [];
-    list.forEach((m) => items.push({ fam, ...m }));
-  });
+  const famLabels = {
+    PU: 'PU',
+    PS: 'PS',
+    SI: 'SI'
+  };
 
-  if (!items.length) {
-    manageMaterialsList.innerHTML = `<div class="empty-state">${CURRENT_LANG === 'de' ? 'Keine Custom-Materialien gespeichert.' : 'No custom materials saved.'}</div>`;
+  const groups = famOrder.map((fam) => ({
+    fam,
+    label: famLabels[fam] || fam,
+    items: (CUSTOM_MATERIALS && Array.isArray(CUSTOM_MATERIALS[fam])) ? CUSTOM_MATERIALS[fam] : []
+  })).filter((group) => group.items.length);
+
+  if (!groups.length) {
+    manageMaterialsList.innerHTML = `<div class="empty-state">${escapeHtml(t('manage_materials_empty'))}</div>`;
     return;
   }
 
-  manageMaterialsList.innerHTML = items.map((m) => {
-    const range = [m.minPercentB, m.maxPercentB]
-      .filter((v) => v != null && Number.isFinite(Number(v)))
-      .map((v) => fmt2(v))
-      .join(' – ');
-    const target = (m.targetPercentB == null || !Number.isFinite(Number(m.targetPercentB))) ? '' : fmt2(m.targetPercentB);
-    const details = range ? `${range} %` : (target ? `${target} %` : '–');
+  manageMaterialsList.innerHTML = groups.map((group) => {
+    const cards = group.items.map((m) => {
+      const hasMin = m.minPercentB != null && Number.isFinite(Number(m.minPercentB));
+      const hasMax = m.maxPercentB != null && Number.isFinite(Number(m.maxPercentB));
+      const hasTarget = m.targetPercentB != null && Number.isFinite(Number(m.targetPercentB));
+      const rangeParts = [];
+      if (hasMin) rangeParts.push(fmt2(m.minPercentB));
+      if (hasMax) rangeParts.push(fmt2(m.maxPercentB));
+      const rangeText = rangeParts.length ? `${rangeParts.join(' – ')} %` : '–';
+      const targetText = hasTarget ? `${fmt2(m.targetPercentB)} %` : '–';
+
+      return `
+        <div class="mm-item" data-fam="${escapeHtml(group.fam)}" data-id="${escapeHtml(m.id)}">
+          <div class="mm-main">
+            <div class="mm-title">
+              <span class="mm-fam">${escapeHtml(group.fam)}</span>
+              <span class="mm-name">${escapeHtml(m.name || m.id)}</span>
+            </div>
+            <div class="mm-meta">
+              <div class="mm-meta-line"><span class="mm-meta-label">${escapeHtml(t('material_meta_range'))}</span><span>${escapeHtml(rangeText)}</span></div>
+              <div class="mm-meta-line"><span class="mm-meta-label">${escapeHtml(t('material_meta_target'))}</span><span>${escapeHtml(targetText)}</span></div>
+            </div>
+          </div>
+          <div class="mm-actions">
+            <button type="button" class="mm-btn" data-action="edit">${escapeHtml(t('btn_edit'))}</button>
+            <button type="button" class="mm-btn danger" data-action="delete">${escapeHtml(t('btn_delete'))}</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
     return `
-      <div class="mm-item" data-fam="${escapeHtml(m.fam)}" data-id="${escapeHtml(m.id)}">
-        <div class="mm-main">
-          <div class="mm-title"><span class="mm-fam">${escapeHtml(m.fam)}</span> <span class="mm-name">${escapeHtml(m.name || m.id)}</span></div>
-          <div class="mm-meta">ID: ${escapeHtml(m.id)} · ${escapeHtml(details)}</div>
-        </div>
-        <div class="mm-actions">
-          <button type="button" class="mm-btn" data-action="edit">${CURRENT_LANG === 'de' ? 'Bearbeiten' : 'Edit'}</button>
-          <button type="button" class="mm-btn danger" data-action="delete">${CURRENT_LANG === 'de' ? 'Löschen' : 'Delete'}</button>
-        </div>
-      </div>
+      <details class="mm-group" data-fam="${escapeHtml(group.fam)}">
+        <summary class="mm-group-summary">
+          <span class="mm-group-title-wrap">
+            <span class="mm-group-kicker">Materialgruppe</span>
+            <span class="mm-group-title">${escapeHtml(group.label)}</span>
+          </span>
+          <span class="mm-group-count">${group.items.length}</span>
+        </summary>
+        <div class="mm-group-items">${cards}</div>
+      </details>
     `;
   }).join('');
 
