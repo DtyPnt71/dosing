@@ -241,7 +241,7 @@ Object.assign(window.HDT_I18N.de, {
   placeholder_material_charge_b: ' -/- ',
   material_modal_name_label: 'Material-Name',
   menu_manage_materials: 'Materialien verwalten',
-  manage_materials_empty: 'Keine Custom-Materialien gespeichert.',
+  manage_materials_empty: 'Keine Materialien gespeichert.',
   btn_edit: 'Bearbeiten',
   btn_delete: 'Löschen',
   btn_close: 'Schließen',
