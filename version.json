@@ -1,6 +1,6 @@
 {
   "version": "v2.4.7",
-  "build": "Build:2026-06-09 Fix:material-family-groups",
+  "build": "Build:2026-06-09",
   "forceReload": true,
   "assets": [
     "./",
@@ -25,11 +25,11 @@
     "./html2pdf.bundle.js"
   ],
   "added": [
-    "Zentrale Übersetzungsdatei i18n.js für UI-Texte, Labels und Platzhalter"
+    "Zentrale Übersetzungsdatei i18n.js"
   ],
   "fixed": [
-    "PDF-Export-Modal: Buttons werden nicht mehr abgeschnitten und haben einheitliche Größen",
-    "Material-Charge-Platzhalter werden zentral aus i18n.js gesetzt und überschreiben nicht mehr uneinheitlich die HTML-Fallbacks",
+    "",
+    "Material-Charge-Platzhalter werden zentral aus i18n.js gesetzt",
     "Custom-Materialverwaltung: Materialien sind jetzt nach PU / PS / SI gruppiert, farblich getrennt und als aufklappbare Kategorien dargestellt"
   ],
   "removed": [
