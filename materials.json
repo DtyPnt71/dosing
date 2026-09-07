@@ -278,9 +278,9 @@
     {
       "id": "kommerling-gd-920",
       "name": "Kömmerling GD 920",
-      "minPercentB": 13.0,
-      "maxPercentB": 13.0,
-      "targetPercentB": 13.0
+      "minPercentB": 9.0,
+      "maxPercentB": 11.0,
+      "targetPercentB": 10.0
     },
     {
       "id": "ramsauer-670",
