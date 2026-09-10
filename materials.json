@@ -73,13 +73,6 @@
   ],
   "PS": [
     {
-      "id": "mycopox-200",
-      "name": "Mycopox 200",
-      "minPercentB": 6.2,
-      "maxPercentB": 6.2,
-      "targetPercentB": 6.2
-    },
-    {
       "id": "fenzi-thiover",
       "name": "Fenzi Thiover",
       "minPercentB": 9.5,
@@ -136,9 +129,9 @@
     },
     {
       "id": "dow-dc-983",
-      "name": "Dow DC 983",
-      "minPercentB": 12.0,
-      "maxPercentB": 14.0
+      "name": "Dowsil 983",
+      "minPercentB": 10.5,
+      "maxPercentB": 13.0
     },
     {
       "id": "dow-dc-3362",
