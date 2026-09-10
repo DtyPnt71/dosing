@@ -8,14 +8,7 @@
   "PU": [
     {
       "id": "tremco-js-442",
-      "name": "Tremco JS 442",
-      "minPercentB": 7.0,
-      "maxPercentB": 7.0,
-      "targetPercentB": 7.0
-    },
-    {
-      "id": "tremco-secoseal-igs",
-      "name": "Tremco Secoseal IGS",
+      "name": "Tremco JS 442 MF",
       "minPercentB": 7.0,
       "maxPercentB": 7.0,
       "targetPercentB": 7.0
