@@ -7,33 +7,6 @@
   "_comment6": "Wenn targetPercentB gesetzt ist, wird dieser Wert in der Toleranzanzeige verwendet.",
   "PU": [
     {
-      "id": "chemtall-naftotherm",
-      "name": "Chemtall Naftotherm",
-      "minPercentB": null,
-      "maxPercentB": null
-    },
-    {
-      "id": "ljf-bostik-3185",
-      "name": "LJF Bostik 3185",
-      "minPercentB": 7.0,
-      "maxPercentB": 7.0,
-      "targetPercentB": 7.0
-    },
-    {
-      "id": "ljf-bostik-3180",
-      "name": "LJF Bostik 3180",
-      "minPercentB": 8.0,
-      "maxPercentB": 8.0,
-      "targetPercentB": 8.0
-    },
-    {
-      "id": "courtaulds-4429-hm",
-      "name": "Courtaulds 4429 HM",
-      "minPercentB": 5.6,
-      "maxPercentB": 5.6,
-      "targetPercentB": 5.6
-    },
-    {
       "id": "tremco-js-442",
       "name": "Tremco JS 442",
       "minPercentB": 7.0,
@@ -48,13 +21,6 @@
       "targetPercentB": 7.0
     },
     {
-      "id": "igk-111",
-      "name": "IGK 111",
-      "minPercentB": 7.1,
-      "maxPercentB": 7.1,
-      "targetPercentB": 7.1
-    },
-    {
       "id": "kommerling-gd667",
       "name": "Kömmerling GD667",
       "minPercentB": 7.5,
@@ -63,7 +29,7 @@
     },
     {
       "id": "kommerling-koerapur-672",
-      "name": "Kömmerling Körapur 672",
+      "name": "Kömmerling Körapur 672 (Unbekannt)",
       "minPercentB": 5.1,
       "maxPercentB": 5.1,
       "targetPercentB": 5.1
@@ -107,60 +73,11 @@
   ],
   "PS": [
     {
-      "id": "chemetall-naftotherm-m82",
-      "name": "Chemetall Naftotherm M82",
-      "minPercentB": 10.0,
-      "maxPercentB": 10.0,
-      "targetPercentB": 10.0
-    },
-    {
-      "id": "courtaulds-prc-429",
-      "name": "Courtaulds PRC 429",
-      "minPercentB": 9.9,
-      "maxPercentB": 9.9,
-      "targetPercentB": 9.9
-    },
-    {
-      "id": "courtaulds-prc-469",
-      "name": "Courtaulds PRC 469",
-      "minPercentB": 8.8,
-      "maxPercentB": 8.8,
-      "targetPercentB": 8.8
-    },
-    {
-      "id": "courtaulds-prc-469m",
-      "name": "Courtaulds PRC 469M",
-      "minPercentB": 9.8,
-      "maxPercentB": 9.8,
-      "targetPercentB": 9.8
-    },
-    {
-      "id": "courtaulds-prc-565",
-      "name": "Courtaulds PRC 565",
-      "minPercentB": 8.6,
-      "maxPercentB": 8.6,
-      "targetPercentB": 8.6
-    },
-    {
-      "id": "emcepren-400",
-      "name": "Emcepren 400",
-      "minPercentB": 10.0,
-      "maxPercentB": 10.0,
-      "targetPercentB": 10.0
-    },
-    {
       "id": "mycopox-200",
       "name": "Mycopox 200",
       "minPercentB": 6.2,
       "maxPercentB": 6.2,
       "targetPercentB": 6.2
-    },
-    {
-      "id": "evode-evo-stick-289",
-      "name": "Evode Evo-Stick 289",
-      "minPercentB": 8.5,
-      "maxPercentB": 8.5,
-      "targetPercentB": 8.5
     },
     {
       "id": "fenzi-thiover",
@@ -179,42 +96,22 @@
     {
       "id": "kommerling-gd116",
       "name": "Kömmerling GD116",
-      "minPercentB": 8.8,
-      "maxPercentB": 9.0
+      "minPercentB": 9.5,
+      "maxPercentB": 11
     },
     {
       "id": "kommerling-gd116lv",
       "name": "Kömmerling GD116LV",
-      "minPercentB": 8.4,
-      "maxPercentB": 8.4,
-      "targetPercentB": 8.4
+      "minPercentB": 9.5,
+      "maxPercentB": 11,
+      "targetPercentB": 10.9,
     },
     {
       "id": "kommerling-gd116na",
       "name": "Kömmerling GD116NA",
-      "minPercentB": 8.5,
-      "maxPercentB": 8.5,
-      "targetPercentB": 8.5
-    },
-    {
-      "id": "ljf-pr428-sh-n",
-      "name": "LJF PR428 SH-N",
-      "minPercentB": 10.0,
-      "maxPercentB": 10.0,
-      "targetPercentB": 10.0
-    },
-    {
-      "id": "ljf-31892",
-      "name": "LJF 3189/2",
-      "minPercentB": 6.4,
-      "maxPercentB": 6.7
-    },
-    {
-      "id": "momentive-ssg-400",
-      "name": "Momentive SSG 400",
-      "minPercentB": 13.0,
-      "maxPercentB": 13.0,
-      "targetPercentB": 13.0
+      "minPercentB": 9.5,
+      "maxPercentB": 11,
+      "targetPercentB": 10.9
     },
     {
       "id": "nedex-ps-018",
@@ -222,20 +119,6 @@
       "minPercentB": 8.6,
       "maxPercentB": 8.6,
       "targetPercentB": 8.6
-    },
-    {
-      "id": "sika-glace-ig-50",
-      "name": "Sika Glace IG-50",
-      "minPercentB": 6.8,
-      "maxPercentB": 6.8,
-      "targetPercentB": 6.8
-    },
-    {
-      "id": "teroson-terostat-998r",
-      "name": "Teroson Terostat 998R",
-      "minPercentB": 10.0,
-      "maxPercentB": 10.0,
-      "targetPercentB": 10.0
     }
   ],
   "SI": [
@@ -262,12 +145,6 @@
       "name": "Dow DC 3362",
       "minPercentB": 9.0,
       "maxPercentB": 11.0
-    },
-    {
-      "id": "dow-dc-3332",
-      "name": "Dow DC 3332",
-      "minPercentB": 12.0,
-      "maxPercentB": 14.0
     },
     {
       "id": "dow-dc-3363",
