@@ -1,0 +1,12 @@
+{
+  "version": "v3.3.1",
+  "build": "2026-09-24",
+  "maintenance": false,
+  "architecture": "React + TypeScript + Tailwind CSS + shadcn/Radix UI",
+  "notes": [
+    "Helles, kontraststarkes Produktionsdesign",
+    "Gewichtshinweis und Wartungsmodus wiederhergestellt",
+    "Materialauswahl öffnet ohne Bildschirmtastatur",
+    "Sichtbarer Update-Hinweis und manuelle Updateprüfung"
+  ]
+}
